@@ -1,0 +1,27 @@
+name = "hogwarts-ny"
+main = "worker/src/index.js"
+compatibility_date = "2024-11-01"
+
+# Статика (host + player) — лежит в public/ и раздаётся тем же Worker'ом
+[assets]
+directory = "./public"
+binding = "ASSETS"
+html_handling = "none"
+not_found_handling = "none"
+
+# "Комната" игры — один Durable Object на одну игровую сессию (компанию)
+[[durable_objects.bindings]]
+name = "GAME_ROOM"
+class_name = "GameRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameRoom"]
+
+# ---- ПРОД: маршрут поверх Tilda-домена ----
+# Раскомментировать и адаптировать после того, как зона kudriavtsev-on.ru
+# будет подключена в dash.cloudflare.com, а воркер задеплоен:
+#
+# routes = [
+#   { pattern = "kudriavtsev-on.ru/hogwarts_ny*", zone_name = "kudriavtsev-on.ru" }
+# ]
