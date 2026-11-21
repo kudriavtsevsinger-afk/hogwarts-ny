@@ -1,3 +1,4 @@
+export { GameRoom } from "./worker/src/room.js";
 /** Hogwarts: Last Midnight. Release 0.1: room + persistent character creation. */
 const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const ALLOWED_HOUSES = ['gryffindor','slytherin','ravenclaw','hufflepuff'];
