@@ -2,6 +2,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
+node "$root/avatar-build/prepare-editor.mjs"
 upstream="$(mktemp -d)"
 trap 'rm -rf "$upstream"' EXIT
 git -C "$upstream" init -q
