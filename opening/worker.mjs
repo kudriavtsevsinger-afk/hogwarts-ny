@@ -151,7 +151,7 @@ async function applyAction(txn, room, action, auth, input) {
     return json(view(room, auth));
   }
   const admin = room.players.get('oleg');
-  if (!admin || !auth || auth !== admin.token) fail('Управление доступно только Олегу с его телефона.', 403);
+  if (!admin || !auth || auth !== admin.token) fail('Это действие недоступно.', 403);
   if (action === 'sound') {
     if (typeof input.enabled !== 'boolean' || typeof input.volume !== 'number' || !Number.isFinite(input.volume) || input.volume < 0 || input.volume > 1) fail('Некорректная громкость.', 400);
     room.audio = { enabled: input.enabled, volume: input.volume };
@@ -165,7 +165,7 @@ async function applyAction(txn, room, action, auth, input) {
     delete room.revealAt; delete room.lineup; delete room.pausedAt;
     for (const p of room.players.values()) p.answers = [];
   } else if (action === 'remove' && phase(room) === 'lobby') {
-    if (input.id === 'oleg') fail('Олег остаётся администратором комнаты.', 400);
+    if (input.id === 'oleg') fail('Этого участника нельзя удалить.', 400);
     room.players.delete(input.id);
   } else if (action === 'start' && phase(room) === 'lobby') {
     const players = [...room.players.values()];

@@ -151,7 +151,7 @@ function hostLobby() {
     list.append(item);
   }
   box.append(list);
-  box.append(element('p', state.names.some(p => p.id === 'oleg' && p.taken) ? 'Олег начнёт историю, когда все будут готовы.' : 'Ждём Олега — он будет вести игру со своего телефона.', 'hint'));
+  box.append(element('p', 'История начнётся, когда все будут готовы.', 'hint'));
 }
 function playerLobby() {
   if (!state.player) {
@@ -203,7 +203,6 @@ function render() {
   if (state.phase === 'platform') {
     const box = panel('Перед началом', 'Мир вокруг затихает. В темноте появляется узкая полоса света. За ней слышны три коротких удара, затем снова тишина.');
     box.classList.add('scene-copy');
-    box.append(element('p', 'Продолжение — у Олега на телефоне', 'hint'));
   } else if (state.phase === 'crossing') {
     screen.replaceChildren(element('div', '', 'blackout'));
   } else if (state.phase === 'credits' && state.card) {
@@ -253,15 +252,14 @@ function render() {
       box.append(image(state.player.id, state.player.name, expression), copy);
       adminControls();
     } else {
-      panel('Пролог начался', 'Попроси ведущего создать новую комнату, чтобы сыграть сначала.');
+      panel('Пролог начался', 'Эта история уже началась. Дождись следующей игры.');
     }
   }
 }
 function adminControls() {
   if (!state.isAdmin) return;
   const controls = element('aside', '', 'admin-console');
-  controls.setAttribute('aria-label', 'Управление Олега');
-  controls.append(element('p', 'Олег · ведущий', 'eyebrow'));
+  controls.setAttribute('aria-label', 'Действия');
   if (state.phase === 'lobby') {
     button(controls, 'Начать пролог', async () => accept(await api('/start', {})), 'primary-action').disabled = !state.canStart;
     if (!state.canStart) controls.append(element('p', 'Начало станет доступно, когда все участники закончат опрос.', 'hint'));
