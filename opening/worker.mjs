@@ -1,9 +1,9 @@
 import { questions, score } from './quiz.mjs';
+import { introductions, storyPosition } from './scene01.mjs';
 
 const cast = { oleg: 'Олег', sima: 'Сима', masha: 'Маша', vanya: 'Ваня', liza: 'Лиза', amina: 'Амина' };
 const CARD_MS = 2600;
 const LINEUP_MS = 3600;
-const TITLE_MS = 3900;
 const token = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), value => value.toString(16).padStart(2, '0')).join('');
 function fail(message, status = 409) { throw Object.assign(new Error(message), { status }); }
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' };
@@ -29,11 +29,10 @@ async function readBody(request, limit) {
 }
 function lineupAt(room) { return room.revealAt + room.lineup.length * CARD_MS; }
 function titleAt(room) { return lineupAt(room) + LINEUP_MS; }
-function creditsEnd(room) { return titleAt(room) + TITLE_MS; }
 function phase(room, now = Date.now()) {
   now = room.pausedAt ?? now;
+  if (room.phase === 'story') return 'story';
   if (!room.revealAt) return room.phase;
-  if (now >= creditsEnd(room)) return 'train';
   if (now >= titleAt(room)) return 'title';
   if (now >= lineupAt(room)) return 'lineup';
   return now >= room.revealAt ? 'credits' : 'crossing';
@@ -46,6 +45,7 @@ function view(room, auth) {
   const isAdmin = Boolean(player && player.id === 'oleg');
   const state = {
     phase: current,
+    run: room.run || 'legacy',
     isAdmin, paused: room.pausedAt != null,
     audio: room.audio || { enabled: true, volume: 0.45 },
     canStart: current === 'lobby' && room.players.has('oleg') && [...room.players.values()].every(p => p.answers.length === questions.length),
@@ -62,9 +62,29 @@ function view(room, auth) {
     state.card = { id, name: cast[id], index, count: room.lineup.length };
   }
   if (['lineup', 'title'].includes(current) && host) state.lineup = Object.keys(cast).filter(id => room.lineup.includes(id)).map(id => ({ id, name: cast[id] }));
-  if ((current === 'title' && host) || current === 'train') state.title = 'Тайна последней полуночи';
-  if (current === 'train' && player) state.result = score(player.answers);
-  if (current === 'train' && host) state.lineup = room.lineup.map(id => ({ id, name: cast[id] }));
+  if (current === 'title' && host) state.title = 'Тайна последней полуночи';
+  if (current === 'title' && isAdmin) state.advance = {key:(room.run || 'legacy')+':title',label:'Продолжить',enabled:room.pausedAt == null};
+  if (current === 'story') {
+    const pos = storyPosition(room, cast, now);
+    const answered = room.lineup.filter(id => Number.isInteger(room.introductions?.[id]));
+    const complete = answered.length === room.lineup.length;
+    const key = (room.run || 'legacy') + ':' + pos.index;
+    if (host) state.scene = {
+      ...pos.step, key, elapsedMs:pos.elapsedMs, music:'calm',
+      cast:room.lineup.map(id => ({id,name:cast[id]})),
+      ...(pos.step.interactive ? {answered:answered.map(id=>cast[id]),total:room.lineup.length} : {})
+    };
+    if (player && pos.step.interactive) state.introduction = {
+      question:'Как твой персонаж представится новым попутчикам?',options:introductions,
+      choice:room.introductions?.[player.id] ?? null, answered:answered.length,total:room.lineup.length
+    };
+    if (player && pos.step.end) { state.result = score(player.answers); state.sceneEnded = true; }
+    if (isAdmin) {
+      state.advance = {key,label:pos.step.interactive ? 'Показать знакомство' : 'Далее',
+        enabled:room.pausedAt == null && !pos.step.durationMs && !pos.step.end && (!pos.step.interactive || complete)};
+      state.waiting = pos.step.interactive && !complete ? 'Ждём ответы: '+room.lineup.filter(id=>!answered.includes(id)).map(id=>cast[id]).join(', ') : pos.step.durationMs ? 'Сцена продолжается…' : null;
+    }
+  }
   return state;
 }
 export const OPENING_PATH = '/api/opening/rooms';
@@ -83,7 +103,7 @@ export async function serveOpening(request, env) {
     }
     fail('Не удалось создать комнату. Попробуй ещё раз.', 503);
   }
-  const match = route.match(/^\/(\d{6})(\/(?:join|answer|start|cross|remove|pause|resume|restart|sound))?$/);
+  const match = route.match(/^\/(\d{6})(\/(?:join|answer|start|cross|remove|pause|resume|restart|sound|next|introduce))?$/);
   if (!match) fail('Страница не найдена.', 404);
   const [, code, action = '/state'] = match;
   const stub = env.OPENING_ROOM.get(env.OPENING_ROOM.idFromName(code));
@@ -150,19 +170,39 @@ async function applyAction(txn, room, action, auth, input) {
     await txn.put("room", room);
     return json(view(room, auth));
   }
+  if (action === 'introduce') {
+    const player = [...room.players.values()].find(p => p.token === auth);
+    if (!player || !room.lineup?.includes(player.id)) fail('Сначала присоединись к игре.',403);
+    if (phase(room) !== 'story' || !storyPosition(room,cast).step.interactive || room.pausedAt != null) fail('Сейчас нельзя выбрать реплику.');
+    if (!Number.isInteger(input.choice) || input.choice < 0 || input.choice >= introductions.length) fail('Выбери одну реплику.',400);
+    room.introductions ||= {};
+    if (Object.hasOwn(room.introductions,player.id) && room.introductions[player.id] !== input.choice) fail('Реплика уже выбрана.');
+    room.introductions[player.id] = input.choice;
+    await txn.put('room',room); return json(view(room,auth));
+  }
   const admin = room.players.get('oleg');
   if (!admin || !auth || auth !== admin.token) fail('Это действие недоступно.', 403);
-  if (action === 'sound') {
+  if (action === 'next') {
+    if (room.pausedAt != null) fail('Сначала продолжи игру.');
+    const current = view(room,auth);
+    if (!current.advance?.enabled || input.key !== current.advance.key) fail('Этот момент уже изменился.');
+    if (current.phase === 'title') { room.phase = 'story'; room.storyIndex = 0; room.introductions = {}; }
+    else room.storyIndex = storyPosition(room,cast).index + 1;
+    room.storyStartedAt = Date.now();
+  } else if (action === 'sound') {
     if (typeof input.enabled !== 'boolean' || typeof input.volume !== 'number' || !Number.isFinite(input.volume) || input.volume < 0 || input.volume > 1) fail('Некорректная громкость.', 400);
     room.audio = { enabled: input.enabled, volume: input.volume };
   } else if (action === 'pause' && room.pausedAt == null && phase(room) !== 'lobby') {
     room.pausedAt = Date.now();
   } else if (action === 'resume' && room.pausedAt != null) {
     if (room.revealAt) room.revealAt += Date.now() - room.pausedAt;
+    if (room.storyStartedAt != null) room.storyStartedAt += Date.now() - room.pausedAt;
     delete room.pausedAt;
   } else if (action === 'restart') {
     room.phase = 'lobby';
     delete room.revealAt; delete room.lineup; delete room.pausedAt;
+    delete room.storyIndex; delete room.storyStartedAt; delete room.introductions;
+    room.run = token();
     for (const p of room.players.values()) p.answers = [];
   } else if (action === 'remove' && phase(room) === 'lobby') {
     if (input.id === 'oleg') fail('Этого участника нельзя удалить.', 400);
@@ -170,8 +210,9 @@ async function applyAction(txn, room, action, auth, input) {
   } else if (action === 'start' && phase(room) === 'lobby') {
     const players = [...room.players.values()];
     if (players.length < 1 || !players.every(p => p.answers.length === questions.length)) fail('Нужен хотя бы один игрок, и все должны закончить опрос.');
-    room.lineup = players.map(p => p.id);
-    room.phase = 'platform';
+    room.lineup = Object.keys(cast).filter(id => room.players.has(id));
+    room.run = token(); room.phase = 'opening';
+    room.revealAt = Date.now() + 1200;
   } else if (action === 'cross' && phase(room) === 'platform' && room.pausedAt == null) {
     room.revealAt = Date.now() + 1800;
   } else {

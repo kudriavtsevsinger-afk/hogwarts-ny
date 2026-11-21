@@ -1,6 +1,6 @@
 {
   "scene": "Кингс-Кросс. Зимний вечер",
-  "status": "assets-ready; scene integration pending",
+  "status": "integrated",
   "images": {
     "wall": {
       "url": "/art/scene-01/wall.webp",

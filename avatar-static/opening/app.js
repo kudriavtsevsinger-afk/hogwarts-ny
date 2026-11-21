@@ -90,11 +90,12 @@ function accept(next) {
   document.querySelector('#pause-label').hidden = !state.paused;
   document.body.classList.toggle('is-paused', host && Boolean(state.paused));
   // Sound and pause updates must not remount a paused scene at animation frame zero.
-  const visualState = host ? { ...state, paused: undefined, audio: undefined } : state;
+  const visualState = host ? { ...state, paused: undefined, audio: undefined, scene:state.scene ? {...state.scene, elapsedMs:undefined} : undefined } : state;
   const key = JSON.stringify([visualState, code, Boolean(session)]);
-  if (key === rendered) return;
+  if (key === rendered) { if(host && state.scene) window.PrologueScene.sync(state.scene,state.paused); return; }
   rendered = key;
   render();
+  if(host && state.scene) window.PrologueScene.sync(state.scene,state.paused);
 }
 function entry() {
   if (host) {
@@ -190,14 +191,25 @@ function playerLobby() {
 function render() {
   document.body.dataset.phase = state?.phase || 'entry';
   if (!state) return entry();
-  document.body.dataset.outdoor = String(host && ['platform', 'crossing'].includes(state.phase));
+  document.body.dataset.outdoor = String(host && Boolean(state.scene?.outdoor));
   if (state.phase === 'lobby') {
     host ? hostLobby() : playerLobby();
+    if(host)window.PrologueScene.preload();
     if (!host) adminControls();
     return;
   }
-  if (!host && state.phase !== 'train') {
-    panel(state.paused ? 'Небольшая пауза' : 'История оживает', state.isAdmin && state.phase === 'platform' ? 'На общем экране — начало истории. Продолжи, когда все прочитают текст.' : 'Смотри на общий экран. Твой телефон понадобится чуть позже.');
+  if (state.phase === 'story') {
+    if(host) window.PrologueScene.render(state.scene,screen);
+    else {
+      if(state.introduction) introductionChoice();
+      else if(state.sceneEnded && state.result) personalResult();
+      else panel(state.paused ? 'Небольшая пауза' : 'История оживает', 'Смотри на общий экран.');
+      adminControls();
+    }
+    return;
+  }
+  if (!host) {
+    panel(state.paused ? 'Небольшая пауза' : 'История оживает', 'Смотри на общий экран.');
     adminControls(); return;
   }
   if (state.phase === 'platform') {
@@ -238,24 +250,30 @@ function render() {
       logoFrame.append(logo);
       scene.append(logoFrame);
     }
-  } else if (state.phase === 'train') {
-    if (host) {
-      const box = panel('За дверью', 'Тишина отступает. Впереди — комната под номером семь. Изнутри доносится голос: «Мы вас ждали».');
-      box.classList.add('scene-copy');
-    } else if (state.result) {
-      const box = panel(state.player.name, state.result.role);
-      const expression = ({'Смельчак':'smile','Мудрец':'neutral','Стратег':'concerned','Хранитель':'smile','Лидер':'surprised','Творец':'surprised'})[state.result.role];
-      box.classList.add('personal-result');
-      const copy = element('div', '', 'result-copy');
-      while (box.firstChild) copy.append(box.firstChild);
-      copy.append(element('p', state.result.strongest.join(' · '), 'traits'));
-      box.append(image(state.player.id, state.player.name, expression), copy);
-      adminControls();
-    } else {
-      panel('Пролог начался', 'Эта история уже началась. Дождись следующей игры.');
-    }
   }
 }
+function introductionChoice() {
+  const q=state.introduction;
+  if(q.choice !== null) {
+    const box=panel('Твоя реплика выбрана',q.options[q.choice]);
+    box.append(element('p','Готово '+q.answered+' из '+q.total+'. Скоро вы познакомитесь на платформе.','hint'));return;
+  }
+  const box=panel(q.question),list=element('div','','options');
+  q.options.forEach((text,choice)=>{
+    button(list,text,async()=>accept(await api('/introduce',{choice})),'option').disabled=state.paused;
+  });box.append(list);
+  if(state.paused)box.append(element('p','Выбор продолжится после паузы.','hint'));
+}
+function personalResult() {
+  const box=panel(state.player.name,state.result.role);
+  const expression=({'Смельчак':'smile','Мудрец':'neutral','Стратег':'concerned','Хранитель':'smile','Лидер':'surprised','Творец':'surprised'})[state.result.role];
+  box.classList.add('personal-result');const copy=element('div','','result-copy');
+  while(box.firstChild)copy.append(box.firstChild);
+  copy.append(element('p',state.result.strongest.join(' · '),'traits'));
+  copy.append(element('p','Поезд отправился. Продолжение следует.','hint'));
+  box.append(image(state.player.id,state.player.name,expression),copy);
+}
+
 function adminControls() {
   if (!state.isAdmin) return;
   const controls = element('aside', '', 'admin-console');
@@ -264,9 +282,13 @@ function adminControls() {
     button(controls, 'Начать пролог', async () => accept(await api('/start', {})), 'primary-action').disabled = !state.canStart;
     if (!state.canStart) controls.append(element('p', 'Начало станет доступно, когда все участники закончат опрос.', 'hint'));
   } else {
-    if (state.phase === 'platform') button(controls, 'Сделать шаг', async () => accept(await api('/cross', {})), 'primary-action').disabled = state.paused;
+    if (state.advance && !state.sceneEnded) {
+      const stepKey=state.advance.key;
+      button(controls,state.advance.label,async()=>accept(await api('/next',{key:stepKey})),'primary-action').disabled=!state.advance.enabled;
+    }
+    if (state.waiting) controls.append(element('p',state.waiting,'hint'));
     button(controls, state.paused ? 'Продолжить' : 'Пауза', async () => accept(await api(state.paused ? '/resume' : '/pause', {})), 'secondary-action');
-    if (state.phase === 'train') controls.append(element('p', 'Вступление завершено. Участники получили свои характеры.', 'hint'));
+    if (state.sceneEnded) controls.append(element('p','Первая сцена завершена.','hint'));
   }
   const settings = element('details'); settings.open = adminExpanded;
   settings.ontoggle = () => { adminExpanded = settings.open; };

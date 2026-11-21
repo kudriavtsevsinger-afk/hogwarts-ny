@@ -1,0 +1,47 @@
+// Stable IDs are also the future voice recording IDs.
+export const introductions = [
+  'Привет! Надеюсь, мы отлично проведём время!',
+  'Кто-нибудь знает, где здесь самое интересное купе?',
+  'Предлагаю держаться вместе. Так веселее',
+  'Сначала доберёмся до школы. Потом познакомимся поближе'
+];
+export function sceneSequence(ids, cast, choices = {}) {
+  const cinematic = (id, visual, durationMs, extra = {}) => ({id, visual, durationMs, ...extra});
+  const line = (id, speaker, text, actor, extra = {}) => ({id, visual:'dialogue', background:'platform', speaker, text, actor, voiceId:id, ...extra});
+  const count = {1:'один путешественник',2:'двое',3:'трое',4:'четверо',5:'пятеро',6:'шестеро'}[ids.length];
+  return [
+    cinematic('blackout','blackout',1400),
+    cinematic('wall-pan','wall',6500,{outdoor:true}),
+    cinematic('trolley-pass','trolley',5500,{outdoor:true}),
+    cinematic('wall-cross','threshold',2200,{outdoor:true}),
+    cinematic('platform-reveal','platform',4000),
+    line('conductor-boarding','Проводник','Хогвартс-экспресс отправляется через пять минут! Прошу пассажиров занять свои места! И убедительно прошу не превращать багаж в животных. В прошлый раз мы три часа искали чей-то сундук по всему составу!','conductor'),
+    cinematic('cat-reaction','platform',2200,{cue:'cat-meow',cueDuration:1.27,text:'Из толпы доносится сердитое мяуканье.'}),
+    line('conductor-filch','Проводник','Да, мистер Филч, это относится и к вам!','conductor'),
+    cinematic('crowd-reaction','platform',3500,{cue:'crowd-laugh',cueDuration:3,text:'Несколько пассажиров смеются.'}),
+    ...ids.map(id => cinematic('arrival-'+id,'arrival',3200,{actor:id,speaker:cast[id]})),
+    cinematic('travelers-together','group',3200),
+    line('caretaker-count','Смотритель',`А вот и наши путешественники. Сколько вас тут… ${count}? Старость, знаете ли. После сорока лет работы с волшебными поездами перестаёшь доверять даже собственным глазам.`,'caretaker'),
+    line('caretaker-tickets','Смотритель','Имена совпадают. Билеты действительны. Прекрасно. Осталось выяснить одну маленькую вещь: вы уже знакомы друг с другом?','caretaker'),
+    {id:'introductions',visual:'choice',background:'platform',actor:'caretaker',speaker:'Смотритель',text:'Вы уже знакомы друг с другом?',interactive:true},
+    ...ids.map(id => line('introduction-'+id,cast[id],introductions[choices[id]] || '',id,{voiceId:`intro-${id}-${(choices[id] ?? 0)+1}`,expression:choices[id] === 3 ? 'neutral' : 'smile'})),
+    line('caretaker-friendship','Смотритель','Вот и славно. Знаете, за столько лет я заметил одну удивительную вещь. На этой платформе люди часто встречаются впервые. А когда возвращаются обратно, уже не представляют, как раньше жили друг без друга.','caretaker'),
+    cinematic('last-whistle','platform',5600,{cue:'train-whistle',cueDuration:5.39,text:'Паровоз даёт длинный гудок.'}),
+    line('conductor-last-call','Проводник · за кадром','Последняя посадка!',null),
+    line('caretaker-farewell','Смотритель','Ступайте. Хогвартс не любит ждать. Хотя, признаться, иногда и сам опаздывает.','caretaker'),
+    cinematic('doors-open','door',4200),
+    cinematic('boarding','boarding',5500),
+    cinematic('departure','window',9000,{cue:'train-departure',cueDuration:12,carryCue:true}),
+    cinematic('steam-transition','steam',3000),
+    {id:'scene-end',visual:'end',background:'carriage-window',end:true}
+  ];
+}
+export function storyPosition(room, cast, now = Date.now()) {
+  const steps = sceneSequence(room.lineup, cast, room.introductions);
+  let index = room.storyIndex ?? 0, startedAt = room.storyStartedAt;
+  const time = room.pausedAt ?? now;
+  while (steps[index]?.durationMs && time >= startedAt + steps[index].durationMs && index < steps.length-1) {
+    startedAt += steps[index].durationMs; index++;
+  }
+  return { step:steps[index], index, startedAt, elapsedMs:Math.max(0,time-startedAt), count:steps.length };
+}
