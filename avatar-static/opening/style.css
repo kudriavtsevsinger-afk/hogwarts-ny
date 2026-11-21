@@ -1,0 +1,49 @@
+:root{color-scheme:dark;font-family:system-ui,sans-serif;color:#f7efe0;background:#111722;--accent:#e9bd78;--muted:#c3c2c0}
+*{box-sizing:border-box}
+body{margin:0;min-height:100svh;background:radial-gradient(ellipse at top,#253448,#111722 72%)}
+body.host{background:linear-gradient(90deg,#0f1520e8,#12192755),url('/hogwarts_ny/start/art/station.webp') center/cover fixed,#111722}
+#screen{min-height:100svh;display:grid;align-items:center;justify-items:center;padding:clamp(18px,5vw,60px)}
+.host #screen{justify-items:start}
+.panel{width:min(100%,640px);padding:clamp(22px,4vw,42px);border:1px solid #e8bb783d;border-radius:18px;background:#151d29ee;box-shadow:0 24px 90px #0006}
+h1{font:500 clamp(1.75rem,4vw,3.3rem)/1.1 Georgia,serif;margin:0 0 18px;text-wrap:balance}
+p{line-height:1.55;margin:0 0 16px}
+.subtitle,.hint{color:var(--muted)}
+.code{font-size:clamp(2rem,6vw,4.4rem);font-variant-numeric:tabular-nums;letter-spacing:.14em;color:var(--accent);margin:10px 0}
+a{color:#f5cf92;overflow-wrap:anywhere}
+.join-link{display:block;margin:8px 0}
+button,input{font:inherit;border-radius:10px;padding:12px 16px}
+button{border:1px solid #eed0a2;background:var(--accent);color:#1e1920;cursor:pointer;font-weight:650}
+button:disabled{opacity:.48;cursor:default}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #92d1f7;outline-offset:3px}
+input{width:100%;border:1px solid #777e89;background:#111722;color:#fff}
+form,.options{display:grid;gap:10px}
+.option{background:#222f41;color:#fff;border-color:#475469;text-align:left;line-height:1.45}
+.option:hover:enabled{background:#324259}
+.eyebrow{color:var(--accent);letter-spacing:.14em;font-size:.85rem;text-transform:uppercase}
+progress{width:100%;height:8px;accent-color:var(--accent);margin:0 0 18px}
+.players{list-style:none;padding:0;margin:20px 0}
+.players li{display:flex;align-items:center;gap:10px;margin:7px 0}
+.status{margin-left:auto;color:var(--muted)}
+.small{font-size:.8rem;padding:6px 9px}
+.hint{margin:12px 0 0;font-size:.9rem}
+#error{position:fixed;bottom:12px;left:12px;right:12px;margin:0;padding:12px 18px;background:#622d38;border-radius:10px;z-index:3}
+body.host[data-phase="crossing"],body.host[data-phase="credits"],body.host[data-phase="title"]{background:#090e18}
+body.host[data-phase="credits"] #screen,body.host[data-phase="title"] #screen{justify-items:center;padding:0;overflow:hidden}
+.credits,.title-card{width:100%;height:100svh;position:relative;display:grid;place-items:center;text-align:center;isolation:isolate;background:radial-gradient(ellipse at 50% 54%,#394457,#0a111e 70%)}
+.credits img{position:absolute;bottom:0;height:95%;max-width:94vw;object-fit:contain;object-position:bottom;animation:portrait .75s ease-out both}
+.credits h1{align-self:end;z-index:1;margin:0;width:100%;padding:20px 20px 5vh;background:linear-gradient(transparent,#090d16e8 75%);font-size:clamp(2.5rem,9vw,6.5rem);text-shadow:0 3px 18px #000}
+.title-card{display:flex;flex-direction:column;justify-content:center;padding:24px;background:radial-gradient(ellipse,#3a2b30,#090e18 70%)}
+.title-card h1{font-size:clamp(3rem,9vw,8rem);color:#f9d69c;animation:portrait 1s ease-out both}
+.title-card .eyebrow{font-size:clamp(1rem,3vw,2rem)}
+.lineup{display:flex;flex-wrap:wrap;gap:10px}
+figure{margin:0;width:clamp(72px,12vw,115px)}
+.panel img{display:block;width:min(100%,290px);height:auto}
+.lineup img{width:100%;aspect-ratio:1;object-fit:cover;object-position:top;background:#212a3a;border-radius:8px}
+figcaption{text-align:center;margin-top:4px}
+@keyframes portrait{from{opacity:0;transform:scale(1.035)}to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
+.credits::after{content:"";position:absolute;inset:auto -10% -10% -10%;height:40%;pointer-events:none;background:radial-gradient(ellipse at 35% 70%,#bfc8db30,transparent 62%),radial-gradient(ellipse at 72% 80%,#d2deed23,transparent 66%);filter:blur(16px);animation:steam 2.6s ease-out both}
+@keyframes steam{from{transform:translateX(-6%);opacity:.9}to{transform:translateX(8%);opacity:.2}}
+label{display:grid;gap:8px;margin:16px 0}
+.qr{display:inline-grid;padding:10px;background:white;border-radius:8px}
+.panel .qr img{width:144px;height:144px;image-rendering:pixelated}

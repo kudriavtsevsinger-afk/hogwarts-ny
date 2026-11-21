@@ -13,3 +13,11 @@ directory = "./avatar-static"
 binding = "AVATAR_ASSETS"
 html_handling = "none"
 run_worker_first = true
+
+[[durable_objects.bindings]]
+name = "OPENING_ROOM"
+class_name = "OpeningRoom"
+
+[[migrations]]
+tag = "opening-v1"
+new_sqlite_classes = ["OpeningRoom"]

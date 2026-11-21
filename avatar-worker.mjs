@@ -1,9 +1,14 @@
+import { OPENING_PATH, opening } from "./opening/worker.mjs";
+export { OpeningRoom } from "./opening/worker.mjs";
 import game from './hogwarts-worker.mjs';
 export { GameRoom } from './hogwarts-worker.mjs';
 
 export default {
   async fetch(request, env, context) {
     const url = new URL(request.url);
+    if (url.pathname === OPENING_PATH || url.pathname.startsWith(OPENING_PATH + "/")) {
+      return opening(request, env);
+    }
     const path = url.pathname.replace(/^\/hogwarts_ny(?=\/)/, '');
     if (path === '/prologue.html' || path === '/assets/prologue.js' || path === '/assets/player.js' || path === '/assets/editor-avatar.js' || path.startsWith('/assets/real-avatar/')) {
       url.pathname = path;
