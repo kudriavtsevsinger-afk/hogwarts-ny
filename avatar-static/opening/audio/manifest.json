@@ -128,5 +128,83 @@
     "url": "/audio/cat-meow.ogg",
     "duration": 1.27,
     "cue": "Мяуканье после предупреждения о багаже"
+  },
+  "voice-01": {
+    "source": "1.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/01.ogg",
+    "duration": 12.406
+  },
+  "voice-02": {
+    "source": "2.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/02.ogg",
+    "duration": 3.046
+  },
+  "voice-03": {
+    "source": "3.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/03.ogg",
+    "duration": 10.646
+  },
+  "voice-04": {
+    "source": "4.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/04.ogg",
+    "duration": 8.326
+  },
+  "voice-05": {
+    "source": "5.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/05.ogg",
+    "duration": 13.846
+  },
+  "voice-06": {
+    "source": "6.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/06.ogg",
+    "duration": 2.086
+  },
+  "voice-07": {
+    "source": "7.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/07.ogg",
+    "duration": 6.166
+  },
+  "voice-08": {
+    "source": "8.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/08.ogg",
+    "duration": 7.846
+  },
+  "voice-09": {
+    "source": "9.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/09.ogg",
+    "duration": 11.206
+  },
+  "voice-10": {
+    "source": "10.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/10.ogg",
+    "duration": 2.486
+  },
+  "voice-11": {
+    "source": "11.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/11.ogg",
+    "duration": 4.886
+  },
+  "voice-12": {
+    "source": "12.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/12.ogg",
+    "duration": 6.806
+  },
+  "voice-13": {
+    "source": "13.mp3",
+    "kind": "voice",
+    "url": "/audio/voice/13.ogg",
+    "duration": 1.606
   }
 }

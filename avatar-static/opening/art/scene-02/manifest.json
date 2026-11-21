@@ -1,0 +1,42 @@
+{
+  "scene": "Купе поезда. Вечер",
+  "status": "integrated",
+  "images": {
+    "compartment": {
+      "url": "/art/scene-02/compartment.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "prompt": "Hand-painted cozy Victorian magical train compartment at winter evening, burgundy seats, large window with snowy fields, luggage racks, green scarf, amber lamps; empty background for characters; 16:9."
+    },
+    "vendor": {
+      "url": "/art/scene-02/vendor.webp",
+      "size": [
+        1312,
+        1199
+      ],
+      "transparent": true,
+      "prompt": "Hand-painted smiling elderly silver-haired confectionery seller in plum Victorian dress and cream apron, beside brass sweets trolley; entire character and trolley; transparent background."
+    },
+    "viaduct": {
+      "url": "/art/scene-02/viaduct.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "prompt": "Hand-painted scarlet steam train on high curved stone viaduct in snowy highlands, distant glowing Gothic castle at winter twilight, cinematic 16:9."
+    },
+    "sweets": {
+      "url": "/art/scene-02/sweets.webp",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent": true,
+      "prompt": "Single square 2x2 transparent sprite atlas: chocolate frog upper left, pumpkin pastry upper right, jelly beans lower left, knotted black licorice lower right. Painterly amber-lit style, no text."
+    }
+  }
+}

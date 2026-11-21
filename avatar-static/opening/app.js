@@ -98,6 +98,7 @@ function accept(next) {
   if(host && state.scene) window.PrologueScene.sync(state.scene,state.paused);
 }
 function entry() {
+  window.TicketCamera.close();
   if (host) {
     const box = panel('Собираем историю', 'Подготавливаем общий экран…');
     if (!code) void act(async () => {
@@ -191,6 +192,7 @@ function playerLobby() {
 function render() {
   document.body.dataset.phase = state?.phase || 'entry';
   if (!state) return entry();
+  if (!state.ticket) window.TicketCamera.close();
   document.body.dataset.outdoor = String(host && Boolean(state.scene?.outdoor));
   if (state.phase === 'lobby') {
     host ? hostLobby() : playerLobby();
@@ -201,7 +203,9 @@ function render() {
   if (state.phase === 'story') {
     if(host) window.PrologueScene.render(state.scene,screen);
     else {
-      if(state.introduction) introductionChoice();
+      if(state.ticket) window.TicketCamera.render(state.ticket,screen,async payload=>act(async()=>accept(await api('/ticket',payload))),state.paused);
+      else if(state.sweetChoice) sweetChoice();
+      else if(state.introduction) introductionChoice();
       else if(state.sceneEnded && state.result) personalResult();
       else panel(state.paused ? 'Небольшая пауза' : 'История оживает', 'Смотри на общий экран.');
       adminControls();
@@ -260,9 +264,16 @@ function introductionChoice() {
   }
   const box=panel(q.question),list=element('div','','options');
   q.options.forEach((text,choice)=>{
-    button(list,text,async()=>accept(await api('/introduce',{choice})),'option').disabled=state.paused;
+    button(list,text,async()=>accept(await api('/introduce',{choice,key:q.key})),'option').disabled=state.paused;
   });box.append(list);
   if(state.paused)box.append(element('p','Выбор продолжится после паузы.','hint'));
+}
+function sweetChoice() {
+  const q=state.sweetChoice;
+  if(q.choice!==null){const chosen=q.options.find(s=>s.id===q.choice);const box=panel('Сладость выбрана',chosen.name);box.append(element('p','Готово '+q.answered+' из '+q.total+'. Смотри на общий экран.','hint'));return;}
+  const box=panel('Что попробуешь?','У каждой сладости есть свой характер.'),list=element('div','','sweet-options');
+  for(const sweet of q.options){const b=button(list,'',async()=>accept(await api('/sweet',{key:q.key,choice:sweet.id})),'sweet-option');const art=element('span','','sweet-art');art.dataset.sweet=sweet.id;art.setAttribute('aria-hidden','true');b.append(art,element('span',sweet.name));b.disabled=state.paused;}
+  box.append(list);
 }
 function personalResult() {
   const box=panel(state.player.name,state.result.role);
@@ -270,11 +281,12 @@ function personalResult() {
   box.classList.add('personal-result');const copy=element('div','','result-copy');
   while(box.firstChild)copy.append(box.firstChild);
   copy.append(element('p',state.result.strongest.join(' · '),'traits'));
-  copy.append(element('p','Поезд отправился. Продолжение следует.','hint'));
+  copy.append(element('p','Огни замка уже близко. Продолжение следует.','hint'));
   box.append(image(state.player.id,state.player.name,expression),copy);
 }
 
 function adminControls() {
+  screen.querySelector('.admin-console')?.remove();
   if (!state.isAdmin) return;
   const controls = element('aside', '', 'admin-console');
   controls.setAttribute('aria-label', 'Действия');
@@ -288,7 +300,7 @@ function adminControls() {
     }
     if (state.waiting) controls.append(element('p',state.waiting,'hint'));
     button(controls, state.paused ? 'Продолжить' : 'Пауза', async () => accept(await api(state.paused ? '/resume' : '/pause', {})), 'secondary-action');
-    if (state.sceneEnded) controls.append(element('p','Первая сцена завершена.','hint'));
+    if (state.sceneEnded) controls.append(element('p','Первые две сцены завершены.','hint'));
   }
   const settings = element('details'); settings.open = adminExpanded;
   settings.ontoggle = () => { adminExpanded = settings.open; };
@@ -333,6 +345,7 @@ async function poll() {
     error(e.message);
   } finally { pollPending = false; }
 }
+window.addEventListener('pageshow',()=>{rendered=undefined;void poll();});
 entry();
 void poll();
 setInterval(poll, 400);

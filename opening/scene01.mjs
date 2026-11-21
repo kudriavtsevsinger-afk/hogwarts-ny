@@ -1,3 +1,5 @@
+import { secondScene } from './scene02.mjs';
+import { voices } from './voices.mjs';
 // Stable IDs are also the future voice recording IDs.
 export const introductions = [
   'Привет! Надеюсь, мы отлично проведём время!',
@@ -5,10 +7,10 @@ export const introductions = [
   'Предлагаю держаться вместе. Так веселее',
   'Сначала доберёмся до школы. Потом познакомимся поближе'
 ];
-export function sceneSequence(ids, cast, choices = {}) {
+export function sceneSequence(ids, cast, choices = {}, sweetChoices = {}) {
   const cinematic = (id, visual, durationMs, extra = {}) => ({id, visual, durationMs, ...extra});
   const line = (id, speaker, text, actor, extra = {}) => ({id, visual:'dialogue', background:'platform', speaker, text, actor, voiceId:id, ...extra});
-  const count = {1:'один путешественник',2:'двое',3:'трое',4:'четверо',5:'пятеро',6:'шестеро'}[ids.length];
+
   return [
     cinematic('blackout','blackout',1400),
     cinematic('wall-pan','wall',6500,{outdoor:true}),
@@ -21,9 +23,10 @@ export function sceneSequence(ids, cast, choices = {}) {
     cinematic('crowd-reaction','platform',3500,{cue:'crowd-laugh',cueDuration:3,text:'Несколько пассажиров смеются.'}),
     ...ids.map(id => cinematic('arrival-'+id,'arrival',3200,{actor:id,speaker:cast[id]})),
     cinematic('travelers-together','group',3200),
-    line('caretaker-count','Смотритель',`А вот и наши путешественники. Сколько вас тут… ${count}? Старость, знаете ли. После сорока лет работы с волшебными поездами перестаёшь доверять даже собственным глазам.`,'caretaker'),
+    line('caretaker-count','Смотритель','А вот и наши путешественники. Сколько вас тут? Старость, знаете ли. После сорока лет работы с волшебными поездами перестаёшь доверять даже собственным глазам.','caretaker'),
+    {id:'ticket-check',visual:'choice',background:'platform',actor:'caretaker',speaker:'Смотритель',text:'Ваши билеты, пожалуйста.',interactive:true,interaction:'tickets'},
     line('caretaker-tickets','Смотритель','Имена совпадают. Билеты действительны. Прекрасно. Осталось выяснить одну маленькую вещь: вы уже знакомы друг с другом?','caretaker'),
-    {id:'introductions',visual:'choice',background:'platform',actor:'caretaker',speaker:'Смотритель',text:'Вы уже знакомы друг с другом?',interactive:true},
+    {id:'introductions',visual:'choice',background:'platform',actor:'caretaker',speaker:'Смотритель',text:'Вы уже знакомы друг с другом?',interactive:true,interaction:'introductions'},
     ...ids.map(id => line('introduction-'+id,cast[id],introductions[choices[id]] || '',id,{voiceId:`intro-${id}-${(choices[id] ?? 0)+1}`,expression:choices[id] === 3 ? 'neutral' : 'smile'})),
     line('caretaker-friendship','Смотритель','Вот и славно. Знаете, за столько лет я заметил одну удивительную вещь. На этой платформе люди часто встречаются впервые. А когда возвращаются обратно, уже не представляют, как раньше жили друг без друга.','caretaker'),
     cinematic('last-whistle','platform',5600,{cue:'train-whistle',cueDuration:5.39,text:'Паровоз даёт длинный гудок.'}),
@@ -33,11 +36,14 @@ export function sceneSequence(ids, cast, choices = {}) {
     cinematic('boarding','boarding',5500),
     cinematic('departure','window',9000,{cue:'train-departure',cueDuration:12,carryCue:true}),
     cinematic('steam-transition','steam',3000),
-    {id:'scene-end',visual:'end',background:'carriage-window',end:true}
-  ];
+    ...secondScene(ids,cast,sweetChoices)
+  ].map(step => {
+    const number=step.voiceNumber || ({'conductor-boarding':1,'conductor-filch':2,'caretaker-count':3,'caretaker-tickets':4,'caretaker-friendship':5,'conductor-last-call':6,'caretaker-farewell':7})[step.id];
+    return {...step,...(number?{voiceNumber:number,voice:voices[number]}:{}),...(['caretaker-count','vendor-brave'].includes(step.id)?{durationMs:voices[number].durationMs+700}:{})};
+  });
 }
 export function storyPosition(room, cast, now = Date.now()) {
-  const steps = sceneSequence(room.lineup, cast, room.introductions);
+  const steps = sceneSequence(room.lineup, cast, room.introductions, room.sweets);
   let index = room.storyIndex ?? 0, startedAt = room.storyStartedAt;
   const time = room.pausedAt ?? now;
   while (steps[index]?.durationMs && time >= startedAt + steps[index].durationMs && index < steps.length-1) {
