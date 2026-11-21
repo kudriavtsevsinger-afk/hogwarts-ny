@@ -1,19 +1,18 @@
-const basePath = '/hogwarts_ny/start';
+const basePath = '/api/opening/rooms';
 const screen = document.querySelector('#screen');
 const errorBox = document.querySelector('#error');
-const host = !location.pathname.replace(/\/$/,'').endsWith('/play');
 const requested = new URLSearchParams(location.search).get('room') || '';
-const storageKey = host ? 'platform-host' : 'platform-player';
+const host = !requested;
+const storageKey = host ? 'midnight-host' : 'midnight-player';
 let session = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
 if (requested && session?.code !== requested) session = null;
 let code = session?.code || (host ? '' : requested);
 let state, rendered, pollPending = false, busy = false, revision = 0;
-const portraitUrls = new Map();
 document.body.classList.toggle('host', host);
 function save() { sessionStorage.setItem(storageKey, JSON.stringify(session)); }
 function error(message) { errorBox.hidden = !message; errorBox.textContent = message || ''; }
 async function api(action = '', payload, roomCode = code) {
-  const response = await fetch(action === 'create' ? basePath + '/api/rooms' : basePath + '/api/rooms/' + roomCode + action, {
+  const response = await fetch(action === 'create' ? basePath : basePath + '/' + roomCode + action, {
     method: payload === undefined ? 'GET' : 'POST',
     headers: { 'Content-Type': 'application/json', ...(session?.token ? { Authorization: 'Bearer ' + session.token } : {}) },
     ...(payload === undefined ? {} : { body: JSON.stringify(payload) })
@@ -61,27 +60,14 @@ function panel(title, subtitle) {
   screen.replaceChildren(section);
   return section;
 }
-function image(id, name) {
+function image(id, name, expression = 'neutral') {
   const img = element('img');
   img.alt = name;
-  if (!portraitUrls.has(id)) {
-    portraitUrls.set(id, fetch(basePath + '/api/rooms/' + code + '/portrait/' + id, {
-      headers: { Authorization: 'Bearer ' + session.token }
-    }).then(async response => {
-      if (!response.ok) throw new Error('Портрет ещё недоступен.');
-      return URL.createObjectURL(await response.blob());
-    }).catch(e => { portraitUrls.delete(id); throw e; }));
-  }
-  portraitUrls.get(id).then(url => { img.src = url; }).catch(() => {});
+  img.src = '/portraits/' + id + '-' + expression + '.webp';
   return img;
 }
-async function create(file) {
-  if (!file) throw new Error('Выбери файл с портретами.');
-  if (file.size > 1500000) throw new Error('Файл с портретами слишком большой.');
-  let portraits;
-  try { portraits = JSON.parse(await file.text()); }
-  catch { throw new Error('Выбери файл с портретами в формате JSON.'); }
-  const room = await api('create', portraits);
+async function create() {
+  const room = await api('create', {});
   session = room;
   code = room.code;
   save();
@@ -96,14 +82,8 @@ function accept(next) {
 }
 function entry() {
   if (host) {
-    const box = panel('Кингс-Кросс', 'Собери компанию перед отправлением.');
-    const label = element('label', 'Файл с портретами');
-    const file = element('input');
-    file.type = 'file';
-    file.accept = '.json,application/json';
-    label.append(file);
-    box.append(label);
-    button(box, 'Создать комнату', () => create(file.files[0]));
+    const box = panel('Новая игра', 'Собери участников. Каждый выберет своё имя и ответит на восемь вопросов.');
+    button(box, 'Создать комнату', () => create());
     return;
   }
   const box = panel('Вход в комнату', 'Введи код с общего экрана.');
@@ -130,7 +110,7 @@ function entry() {
 function hostLobby() {
   const box = panel('Ожидаем остальных', 'Пусть каждый откроет ссылку на телефоне и выберет своё имя.');
   box.append(element('div', code, 'code'));
-  const links = session.links.length ? session.links : [location.origin + basePath + '/play?room=' + code];
+  const links = session.links.length ? session.links : [location.origin + '/?room=' + code];
   if (typeof window.qrcode === "function") {
     const qr = element('div', '', 'qr');
     qr.setAttribute('aria-label', 'QR-код входа');
@@ -160,9 +140,9 @@ function hostLobby() {
     list.append(item);
   }
   box.append(list);
-  const ready = members.length >= 3 && members.every(p => p.ready);
+  const ready = members.length >= 1 && members.every(p => p.ready);
   button(box, 'Начать пролог', async () => accept(await api('/start', {}))).disabled = !ready;
-  if (!ready) box.append(element('p', 'Нужны 3–6 игроков. Каждый отвечает на все восемь вопросов.', 'hint'));
+  if (!ready) box.append(element('p', 'Можно играть даже одному. Все подключившиеся должны закончить опрос.', 'hint'));
 }
 function playerLobby() {
   if (!state.player) {
@@ -204,8 +184,8 @@ function render() {
   if (state.phase === 'lobby') return host ? hostLobby() : playerLobby();
   if (!host && state.phase !== 'train') return panel('Смотри на общий экран');
   if (state.phase === 'platform') {
-    const box = panel('Кингс-Кросс', 'До отправления несколько минут. Между девятой и десятой платформами стоит кирпичный столб. Вокруг спешат пассажиры. Никто не обращает внимания на человека, который только что исчез за стеной.');
-    button(box, 'Шагнуть к стене', async () => accept(await api('/cross', {})));
+    const box = panel('Перед началом', 'Мир вокруг затихает. В темноте появляется узкая полоса света. За ней слышны три коротких удара, затем снова тишина.');
+    button(box, 'Сделать шаг', async () => accept(await api('/cross', {})));
   } else if (state.phase === 'crossing') {
     screen.replaceChildren(element('div', '', 'blackout'));
   } else if (state.phase === 'credits' && state.card) {
@@ -216,12 +196,11 @@ function render() {
     if (!index) whistle();
   } else if (state.phase === 'title') {
     const scene = element('section', '', 'title-card');
-    const [brand, subtitle] = state.title.split('. ');
-    scene.append(element('p', brand, 'eyebrow'), element('h1', subtitle));
+    scene.append(element('p', 'Игра началась', 'eyebrow'), element('h1', state.title));
     screen.replaceChildren(scene);
   } else if (state.phase === 'train') {
     if (host) {
-      const box = panel('Платформа 9¾', 'Пар рассеивается. У платформы ждёт поезд. Проводник поднимает фонарь: «Купе номер семь. Вам туда».');
+      const box = panel('За дверью', 'Тишина отступает. Впереди — комната под номером семь. Изнутри доносится голос: «Мы вас ждали».');
       const line = element('div', '', 'lineup');
       for (const p of state.lineup) {
         const card = element('figure');
@@ -231,7 +210,8 @@ function render() {
       box.append(line);
     } else if (state.result) {
       const box = panel(state.player.name, state.result.role);
-      box.append(image(state.player.id, state.player.name), element('p', state.result.strongest.join(' · ')));
+      const expression = ({'Смельчак':'smile','Мудрец':'neutral','Стратег':'concerned','Хранитель':'smile','Лидер':'surprised','Творец':'surprised'})[state.result.role];
+      box.append(image(state.player.id, state.player.name, expression), element('p', state.result.strongest.join(' · ')));
     } else {
       panel('Пролог начался', 'Попроси ведущего создать новую комнату, чтобы сыграть сначала.');
     }

@@ -52,43 +52,28 @@ function view(room, auth) {
     const id = room.lineup[index];
     state.card = { id, name: cast[id], index, count: room.lineup.length };
   }
-  if ((current === 'title' && host) || current === 'train') state.title = 'Хогвартс. Тайна последней полуночи';
+  if ((current === 'title' && host) || current === 'train') state.title = 'Тайна последней полуночи';
   if (current === 'train' && player) state.result = score(player.answers);
   if (current === 'train' && host) state.lineup = room.lineup.map(id => ({ id, name: cast[id] }));
   return state;
 }
-export const OPENING_PATH = '/hogwarts_ny/start';
-const paths = new Map([
-  ['', 'index.html'], ['/', 'index.html'], ['/play', 'index.html'], ['/play/', 'index.html'],
-  ['/qrcode.min.js', 'qrcode.min.js'], ['/app.js', 'app.js'], ['/style.css', 'style.css'], ['/art/station.webp', 'art/station.webp']
-]);
+export const OPENING_PATH = '/api/opening/rooms';
 export async function serveOpening(request, env) {
   const url = new URL(request.url);
   const route = url.pathname.slice(OPENING_PATH.length);
-  if (request.method === 'GET' && paths.has(route)) {
-    url.pathname = '/opening/' + paths.get(route);
-    return env.AVATAR_ASSETS.fetch(new Request(url, request));
-  }
-  if (route === '/api/rooms' && request.method === 'POST') {
-    const portraits = await readBody(request, 1500000);
-    if (!Object.keys(cast).every(id => typeof portraits[id] === 'string' &&
-        portraits[id].length <= 120000 && /^UklGR[A-Za-z0-9+/=]+$/.test(portraits[id]))) {
-      fail('Выбери файл с комплектом портретов.', 400);
-    }
+  if (route === '' && request.method === 'POST') {
     for (let attempt = 0; attempt < 8; attempt++) {
       const code = String(100000 + crypto.getRandomValues(new Uint32Array(1))[0] % 900000);
       const room = env.OPENING_ROOM.get(env.OPENING_ROOM.idFromName(code));
-      const created = await room.fetch('https://room.internal/create', {
-        method: 'POST', body: JSON.stringify(Object.fromEntries(Object.keys(cast).map(id => [id, portraits[id]])))
-      });
+      const created = await room.fetch('https://room.internal/create', { method: 'POST' });
       if (created.status === 409) continue;
       if (!created.ok) return created;
       const { token: hostToken } = await created.json();
-      return json({ code, token: hostToken, links: [url.origin + OPENING_PATH + '/play?room=' + code] });
+      return json({ code, token: hostToken, links: [url.origin + '/?room=' + code] });
     }
     fail('Не удалось создать комнату. Попробуй ещё раз.', 503);
   }
-  const match = route.match(/^\/api\/rooms\/(\d{6})(\/(?:join|answer|start|cross|remove|portrait\/[a-z]+))?$/);
+  const match = route.match(/^\/(\d{6})(\/(?:join|answer|start|cross|remove))?$/);
   if (!match) fail('Страница не найдена.', 404);
   const [, code, action = '/state'] = match;
   const stub = env.OPENING_ROOM.get(env.OPENING_ROOM.idFromName(code));
@@ -106,15 +91,14 @@ export class OpeningRoom {
   constructor(ctx) { this.storage = ctx.storage; }
   async fetch(request) {
     try {
-      const [, action, target] = new URL(request.url).pathname.split('/');
+      const [, action] = new URL(request.url).pathname.split('/');
       const auth = request.headers.get('Authorization')?.replace(/^Bearer /, '');
       const method = request.method;
       if (action === 'create' && method === 'POST') {
-        const portraits = await readBody(request, 1500000);
         return await this.storage.transaction(async txn => {
           if (await txn.get('room')) fail('Этот код занят.');
           const room = { host: token(), players: new Map(), phase: 'lobby' };
-          await txn.put({ room, ...Object.fromEntries(Object.entries(portraits).map(([id, data]) => ['portrait:' + id, data])) });
+          await txn.put('room', room);
           return json({ token: room.host }, 201);
         });
       }
@@ -122,18 +106,9 @@ export class OpeningRoom {
         const room = await this.storage.get('room');
         if (!room) fail('Комната не найдена. Проверь код.', 404);
         if (action === 'state') return json(view(room, auth));
-        if (action !== 'portrait') fail('Страница не найдена.', 404);
-        const current = phase(room);
-        const isHost = auth === room.host;
-        const isCurrentCard = isHost && current === 'credits' && view(room, auth).card?.id === target;
-        const canSee = isCurrentCard || (current === 'train' && (isHost || (auth && room.players.get(target)?.token === auth)));
-        if (!canSee || !room.lineup?.includes(target)) fail('Портрет пока скрыт.', 403);
-        const portrait = await this.storage.get('portrait:' + target);
-        return new Response(Uint8Array.from(atob(portrait), c => c.charCodeAt(0)), {
-          headers: { ...headers, 'Content-Type': 'image/webp' }
-        });
+        fail('Страница не найдена.', 404);
       }
-      if (method !== 'POST' || action === 'state' || action === 'portrait') fail('Метод не поддерживается.', 405);
+      if (method !== 'POST' || action === 'state') fail('Метод не поддерживается.', 405);
       const input = await readBody(request, 4096);
       return await this.storage.transaction(async txn => {
         const room = await txn.get('room');
@@ -170,7 +145,7 @@ async function applyAction(txn, room, action, auth, input) {
     room.players.delete(input.id);
   } else if (action === 'start' && phase(room) === 'lobby') {
     const players = [...room.players.values()];
-    if (players.length < 3 || !players.every(p => p.answers.length === questions.length)) fail('Нужны минимум три игрока и все должны закончить опрос.');
+    if (players.length < 1 || !players.every(p => p.answers.length === questions.length)) fail('Нужен хотя бы один игрок, и все должны закончить опрос.');
     room.lineup = players.map(p => p.id);
     room.phase = 'platform';
   } else if (action === 'cross' && phase(room) === 'platform') {

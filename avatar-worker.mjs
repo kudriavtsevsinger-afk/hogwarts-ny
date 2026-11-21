@@ -9,6 +9,17 @@ export default {
     if (url.pathname === OPENING_PATH || url.pathname.startsWith(OPENING_PATH + "/")) {
       return opening(request, env);
     }
+    if (["/app.js", "/style.css", "/qrcode.min.js"].includes(url.pathname)) {
+      url.pathname = "/opening" + url.pathname;
+      return env.AVATAR_ASSETS.fetch(new Request(url, request));
+    }
+    if (url.pathname.startsWith("/portraits/")) {
+      return env.AVATAR_ASSETS.fetch(request);
+    }
+    if (request.method === "GET" && !url.pathname.startsWith("/api/")) {
+      url.pathname = "/opening/index.html";
+      return env.AVATAR_ASSETS.fetch(new Request(url, request));
+    }
     const path = url.pathname.replace(/^\/hogwarts_ny(?=\/)/, '');
     if (path === '/prologue.html' || path === '/assets/prologue.js' || path === '/assets/player.js' || path === '/assets/editor-avatar.js' || path.startsWith('/assets/real-avatar/')) {
       url.pathname = path;

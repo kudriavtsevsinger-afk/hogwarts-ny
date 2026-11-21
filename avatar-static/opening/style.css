@@ -1,7 +1,7 @@
 :root{color-scheme:dark;font-family:system-ui,sans-serif;color:#f7efe0;background:#111722;--accent:#e9bd78;--muted:#c3c2c0}
 *{box-sizing:border-box}
 body{margin:0;min-height:100svh;background:radial-gradient(ellipse at top,#253448,#111722 72%)}
-body.host{background:linear-gradient(90deg,#0f1520e8,#12192755),url('/hogwarts_ny/start/art/station.webp') center/cover fixed,#111722}
+body.host{background:radial-gradient(ellipse at 70% 20%,#3d3b4824,transparent 45%),radial-gradient(ellipse at 20% 90%,#c69f6120,transparent 40%),#11131a}
 #screen{min-height:100svh;display:grid;align-items:center;justify-items:center;padding:clamp(18px,5vw,60px)}
 .host #screen{justify-items:start}
 .panel{width:min(100%,640px);padding:clamp(22px,4vw,42px);border:1px solid #e8bb783d;border-radius:18px;background:#151d29ee;box-shadow:0 24px 90px #0006}
@@ -29,10 +29,10 @@ progress{width:100%;height:8px;accent-color:var(--accent);margin:0 0 18px}
 #error{position:fixed;bottom:12px;left:12px;right:12px;margin:0;padding:12px 18px;background:#622d38;border-radius:10px;z-index:3}
 body.host[data-phase="crossing"],body.host[data-phase="credits"],body.host[data-phase="title"]{background:#090e18}
 body.host[data-phase="credits"] #screen,body.host[data-phase="title"] #screen{justify-items:center;padding:0;overflow:hidden}
-.credits,.title-card{width:100%;height:100svh;position:relative;display:grid;place-items:center;text-align:center;isolation:isolate;background:radial-gradient(ellipse at 50% 54%,#394457,#0a111e 70%)}
+.credits,.title-card{width:100%;height:100svh;position:relative;display:grid;place-items:center;text-align:center;isolation:isolate;background:radial-gradient(ellipse at 50% 54%,#45424a,#0a0c11 70%)}
 .credits img{position:absolute;bottom:0;height:95%;max-width:94vw;object-fit:contain;object-position:bottom;animation:portrait .75s ease-out both}
 .credits h1{align-self:end;z-index:1;margin:0;width:100%;padding:20px 20px 5vh;background:linear-gradient(transparent,#090d16e8 75%);font-size:clamp(2.5rem,9vw,6.5rem);text-shadow:0 3px 18px #000}
-.title-card{display:flex;flex-direction:column;justify-content:center;padding:24px;background:radial-gradient(ellipse,#3a2b30,#090e18 70%)}
+.title-card{display:flex;flex-direction:column;justify-content:center;padding:24px;background:radial-gradient(ellipse,#383139,#090b10 70%)}
 .title-card h1{font-size:clamp(3rem,9vw,8rem);color:#f9d69c;animation:portrait 1s ease-out both}
 .title-card .eyebrow{font-size:clamp(1rem,3vw,2rem)}
 .lineup{display:flex;flex-wrap:wrap;gap:10px}
