@@ -100,5 +100,33 @@
     "kind": "effect",
     "url": "/audio/magic.ogg",
     "duration": 4.81
+  },
+  "train-whistle": {
+    "source": "Гудок поезда.mp3",
+    "kind": "effect",
+    "url": "/audio/train-whistle.ogg",
+    "duration": 5.39,
+    "cue": "Длинный гудок перед последней посадкой"
+  },
+  "train-departure": {
+    "source": "стук отправления поезда.mp3",
+    "kind": "effect",
+    "url": "/audio/train-departure.ogg",
+    "duration": 110.73,
+    "cue": "Отправление, стук колёс перед переходом через пар"
+  },
+  "crowd-laugh": {
+    "source": "Смех.mp3",
+    "kind": "effect",
+    "url": "/audio/crowd-laugh.ogg",
+    "duration": 15.18,
+    "cue": "Реакция пассажиров после реплики о Филче"
+  },
+  "cat-meow": {
+    "source": "Мяукает грустный кот жалостливое звучание.mp3",
+    "kind": "effect",
+    "url": "/audio/cat-meow.ogg",
+    "duration": 1.27,
+    "cue": "Мяуканье после предупреждения о багаже"
   }
 }

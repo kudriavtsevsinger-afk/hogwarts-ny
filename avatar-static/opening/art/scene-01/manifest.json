@@ -1,0 +1,92 @@
+{
+  "scene": "Кингс-Кросс. Зимний вечер",
+  "status": "assets-ready; scene integration pending",
+  "images": {
+    "wall": {
+      "url": "/art/scene-01/wall.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false
+    },
+    "platform": {
+      "url": "/art/scene-01/platform.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false
+    },
+    "conductor": {
+      "url": "/art/scene-01/conductor.webp",
+      "size": [
+        1086,
+        1448
+      ],
+      "transparent": true
+    },
+    "caretaker": {
+      "url": "/art/scene-01/caretaker.webp",
+      "size": [
+        1086,
+        1448
+      ],
+      "transparent": true
+    },
+    "carriage-door": {
+      "url": "/art/scene-01/carriage-door.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false
+    },
+    "carriage-window": {
+      "url": "/art/scene-01/carriage-window.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false
+    },
+    "trolley": {
+      "url": "/art/scene-01/trolley.webp",
+      "size": [
+        1448,
+        1086
+      ],
+      "transparent": true
+    }
+  },
+  "effects": {
+    "train-whistle": {
+      "source": "Гудок поезда.mp3",
+      "kind": "effect",
+      "url": "/audio/train-whistle.ogg",
+      "duration": 5.39,
+      "cue": "Длинный гудок перед последней посадкой"
+    },
+    "train-departure": {
+      "source": "стук отправления поезда.mp3",
+      "kind": "effect",
+      "url": "/audio/train-departure.ogg",
+      "duration": 110.73,
+      "cue": "Отправление, стук колёс перед переходом через пар"
+    },
+    "crowd-laugh": {
+      "source": "Смех.mp3",
+      "kind": "effect",
+      "url": "/audio/crowd-laugh.ogg",
+      "duration": 15.18,
+      "cue": "Реакция пассажиров после реплики о Филче"
+    },
+    "cat-meow": {
+      "source": "Мяукает грустный кот жалостливое звучание.mp3",
+      "kind": "effect",
+      "url": "/audio/cat-meow.ogg",
+      "duration": 1.27,
+      "cue": "Мяуканье после предупреждения о багаже"
+    }
+  }
+}
