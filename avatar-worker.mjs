@@ -9,14 +9,14 @@ export default {
     if (url.pathname === OPENING_PATH || url.pathname.startsWith(OPENING_PATH + "/")) {
       return opening(request, env);
     }
-    if (["/app.js", "/style.css", "/qrcode.min.js"].includes(url.pathname)) {
+    if (["/app.js", "/style.css", "/qrcode.min.js", "/sound.js"].includes(url.pathname)) {
       url.pathname = "/opening" + url.pathname;
       return env.AVATAR_ASSETS.fetch(new Request(url, request));
     }
     if (url.pathname.startsWith("/portraits/")) {
       return env.AVATAR_ASSETS.fetch(request);
     }
-    if (url.pathname.startsWith("/art/")) {
+    if (["/art/", "/audio/", "/fonts/"].some(prefix => url.pathname.startsWith(prefix))) {
       url.pathname = "/opening" + url.pathname;
       return env.AVATAR_ASSETS.fetch(new Request(url, request));
     }

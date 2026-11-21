@@ -4,12 +4,23 @@ const errorBox = document.querySelector('#error');
 const requested = new URLSearchParams(location.search).get('room') || '';
 const host = !requested;
 const storageKey = host ? 'midnight-host' : 'midnight-player';
-let session = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
+const storage = host ? sessionStorage : localStorage;
+let session;
+try { session = JSON.parse(storage.getItem(storageKey) || sessionStorage.getItem(storageKey) || 'null'); } catch { session = null; }
 if (requested && session?.code !== requested) session = null;
 let code = session?.code || (host ? '' : requested);
 let state, rendered, pollPending = false, busy = false, revision = 0;
 document.body.classList.toggle('host', host);
-function save() { sessionStorage.setItem(storageKey, JSON.stringify(session)); }
+window.GameSound.init(host);
+let adminExpanded = false;
+const weather = document.querySelector('#weather');
+for (let i = 0; i < 38; i++) {
+  const flake = document.createElement('i');
+  flake.style.cssText = `--x:${(i * 37) % 100}%;--duration:${8 + (i % 9)}s;--delay:-${i % 17}s;--size:${2 + (i % 4)}px`;
+  weather.append(flake);
+}
+function save() { storage.setItem(storageKey, JSON.stringify(session)); }
+if (session) save();
 function error(message) { errorBox.hidden = !message; errorBox.textContent = message || ''; }
 async function api(action = '', payload, roomCode = code) {
   const response = await fetch(action === 'create' ? basePath : basePath + '/' + roomCode + action, {
@@ -75,15 +86,22 @@ async function create() {
 }
 function accept(next) {
   state = next;
-  const key = JSON.stringify([state, code, Boolean(session)]);
+  if (host) window.GameSound.sync(state);
+  document.querySelector('#pause-label').hidden = !state.paused;
+  document.body.classList.toggle('is-paused', host && Boolean(state.paused));
+  // Sound and pause updates must not remount a paused scene at animation frame zero.
+  const visualState = host ? { ...state, paused: undefined, audio: undefined } : state;
+  const key = JSON.stringify([visualState, code, Boolean(session)]);
   if (key === rendered) return;
   rendered = key;
   render();
 }
 function entry() {
   if (host) {
-    const box = panel('Новая игра', 'Собери участников. Каждый выберет своё имя и ответит на восемь вопросов.');
-    button(box, 'Создать комнату', () => create());
+    const box = panel('Собираем историю', 'Подготавливаем общий экран…');
+    if (!code) void act(async () => {
+      try { await create(); } catch (e) { button(box, 'Повторить подключение', create); throw e; }
+    });
     return;
   }
   const box = panel('Вход в комнату', 'Введи код с общего экрана.');
@@ -108,9 +126,11 @@ function entry() {
   box.append(form);
 }
 function hostLobby() {
-  const box = panel('Ожидаем остальных', 'Пусть каждый откроет ссылку на телефоне и выберет своё имя.');
+  const box = panel('Вечер начинается', 'Отсканируйте QR-код и выберите своё имя.');
+  box.classList.add('lobby-display');
+  box.prepend(element('p', 'Ваша история ещё не написана', 'eyebrow'));
   box.append(element('div', code, 'code'));
-  const links = session.links.length ? session.links : [location.origin + '/?room=' + code];
+  const links = session?.links?.length ? session.links : [location.origin + '/?room=' + code];
   if (typeof window.qrcode === "function") {
     const qr = element('div', '', 'qr');
     qr.setAttribute('aria-label', 'QR-код входа');
@@ -128,14 +148,10 @@ function hostLobby() {
   for (const p of members) {
     const item = element('li');
     item.append(element('span', p.name), element('span', p.ready ? 'Готов' : 'Отвечает', 'status'));
-    const remove = button(item, 'Убрать', async () => accept(await api('/remove', { id: p.id })), 'small');
-    remove.setAttribute('aria-label', 'Убрать из комнаты: ' + p.name);
     list.append(item);
   }
   box.append(list);
-  const ready = members.length >= 1 && members.every(p => p.ready);
-  button(box, 'Начать пролог', async () => accept(await api('/start', {}))).disabled = !ready;
-  if (!ready) box.append(element('p', 'Можно играть даже одному. Все подключившиеся должны закончить опрос.', 'hint'));
+  box.append(element('p', state.names.some(p => p.id === 'oleg' && p.taken) ? 'Олег начнёт историю, когда все будут готовы.' : 'Ждём Олега — он будет вести игру со своего телефона.', 'hint'));
 }
 function playerLobby() {
   if (!state.player) {
@@ -174,11 +190,20 @@ function playerLobby() {
 function render() {
   document.body.dataset.phase = state?.phase || 'entry';
   if (!state) return entry();
-  if (state.phase === 'lobby') return host ? hostLobby() : playerLobby();
-  if (!host && state.phase !== 'train') return panel('Смотри на общий экран');
+  document.body.dataset.outdoor = String(host && ['platform', 'crossing'].includes(state.phase));
+  if (state.phase === 'lobby') {
+    host ? hostLobby() : playerLobby();
+    if (!host) adminControls();
+    return;
+  }
+  if (!host && state.phase !== 'train') {
+    panel(state.paused ? 'Небольшая пауза' : 'История оживает', state.isAdmin && state.phase === 'platform' ? 'На общем экране — начало истории. Продолжи, когда все прочитают текст.' : 'Смотри на общий экран. Твой телефон понадобится чуть позже.');
+    adminControls(); return;
+  }
   if (state.phase === 'platform') {
     const box = panel('Перед началом', 'Мир вокруг затихает. В темноте появляется узкая полоса света. За ней слышны три коротких удара, затем снова тишина.');
-    button(box, 'Сделать шаг', async () => accept(await api('/cross', {})));
+    box.classList.add('scene-copy');
+    box.append(element('p', 'Продолжение — у Олега на телефоне', 'hint'));
   } else if (state.phase === 'crossing') {
     screen.replaceChildren(element('div', '', 'blackout'));
   } else if (state.phase === 'credits' && state.card) {
@@ -188,7 +213,7 @@ function render() {
     figure.append(image(id, name), element('h1', name));
     scene.append(figure);
     screen.replaceChildren(scene);
-    if (!index) whistle();
+
   } else if (state.phase === 'lineup' || state.phase === 'title') {
     // Keep the same ensemble mounted when the logo appears.
     const castKey = state.lineup.map(p => p.id).join(',');
@@ -217,37 +242,56 @@ function render() {
   } else if (state.phase === 'train') {
     if (host) {
       const box = panel('За дверью', 'Тишина отступает. Впереди — комната под номером семь. Изнутри доносится голос: «Мы вас ждали».');
+      box.classList.add('scene-copy');
     } else if (state.result) {
       const box = panel(state.player.name, state.result.role);
       const expression = ({'Смельчак':'smile','Мудрец':'neutral','Стратег':'concerned','Хранитель':'smile','Лидер':'surprised','Творец':'surprised'})[state.result.role];
-      box.append(image(state.player.id, state.player.name, expression), element('p', state.result.strongest.join(' · ')));
+      box.classList.add('personal-result');
+      const copy = element('div', '', 'result-copy');
+      while (box.firstChild) copy.append(box.firstChild);
+      copy.append(element('p', state.result.strongest.join(' · '), 'traits'));
+      box.append(image(state.player.id, state.player.name, expression), copy);
+      adminControls();
     } else {
       panel('Пролог начался', 'Попроси ведущего создать новую комнату, чтобы сыграть сначала.');
     }
   }
 }
-let audio;
-screen.addEventListener('click', () => {
-  if (!host || !window.AudioContext) return;
-  audio ||= new AudioContext();
-  if (audio.state === 'suspended') void audio.resume().catch(() => {});
-});
-function whistle() {
-  if (!audio || audio.state !== 'running') return;
-  const now = audio.currentTime;
-  const volume = audio.createGain();
-  volume.gain.setValueAtTime(0, now);
-  volume.gain.linearRampToValueAtTime(.04, now + .25);
-  volume.gain.linearRampToValueAtTime(0, now + 1.3);
-  volume.connect(audio.destination);
-  for (const hz of [360, 455, 540]) {
-    const tone = audio.createOscillator();
-    tone.frequency.setValueAtTime(hz, now);
-    tone.frequency.linearRampToValueAtTime(hz * .92, now + 1.3);
-    tone.connect(volume);
-    tone.start(now);
-    tone.stop(now + 1.31);
+function adminControls() {
+  if (!state.isAdmin) return;
+  const controls = element('aside', '', 'admin-console');
+  controls.setAttribute('aria-label', 'Управление Олега');
+  controls.append(element('p', 'Олег · ведущий', 'eyebrow'));
+  if (state.phase === 'lobby') {
+    button(controls, 'Начать пролог', async () => accept(await api('/start', {})), 'primary-action').disabled = !state.canStart;
+    if (!state.canStart) controls.append(element('p', 'Начало станет доступно, когда все участники закончат опрос.', 'hint'));
+  } else {
+    if (state.phase === 'platform') button(controls, 'Сделать шаг', async () => accept(await api('/cross', {})), 'primary-action').disabled = state.paused;
+    button(controls, state.paused ? 'Продолжить' : 'Пауза', async () => accept(await api(state.paused ? '/resume' : '/pause', {})), 'secondary-action');
+    if (state.phase === 'train') controls.append(element('p', 'Вступление завершено. Участники получили свои характеры.', 'hint'));
   }
+  const settings = element('details'); settings.open = adminExpanded;
+  settings.ontoggle = () => { adminExpanded = settings.open; };
+  settings.append(element('summary', 'Звук и участники'));
+  const audio = state.audio || {enabled:true,volume:.45};
+  button(settings, audio.enabled ? 'Выключить музыку и звуки' : 'Включить музыку и звуки', async () => accept(await api('/sound', {...audio, enabled:!audio.enabled})), 'secondary-action');
+  const label = element('label', 'Громкость общего экрана');
+  const range = element('input'); range.type = 'range'; range.min = 0; range.max = 100; range.step = 5; range.value = audio.volume * 100;
+  range.setAttribute('aria-label', 'Громкость общего экрана');
+  range.onchange = () => act(async () => accept(await api('/sound', {enabled:audio.enabled,volume:Number(range.value)/100})));
+  label.append(range); settings.append(label);
+  if (state.phase === 'lobby') {
+    for (const p of state.names.filter(p => p.taken)) {
+      const row = element('div', '', 'admin-person');
+      row.append(element('span', p.name + (p.ready ? ' · готов' : ' · отвечает')));
+      if (p.id !== 'oleg') button(row, 'Убрать', async () => accept(await api('/remove', {id:p.id})), 'small secondary-action');
+      settings.append(row);
+    }
+  }
+  button(settings, 'Начать заново', async () => {
+    if (window.confirm('Начать заново? Ответы всех участников будут сброшены.')) accept(await api('/restart', {}));
+  }, 'secondary-action');
+  controls.append(settings); screen.append(controls);
 }
 async function poll() {
   if (!code || busy || pollPending) return;

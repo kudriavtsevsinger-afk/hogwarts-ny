@@ -1,0 +1,104 @@
+{
+  "intro": {
+    "source": "Начало.mp3",
+    "kind": "music",
+    "url": "/audio/intro.ogg",
+    "duration": 293.86
+  },
+  "joy": {
+    "source": "Фон радостный.mp3",
+    "kind": "music",
+    "url": "/audio/joy.ogg",
+    "duration": 222.15
+  },
+  "ambient-3": {
+    "source": "Фон3.mp3",
+    "kind": "music",
+    "url": "/audio/ambient-3.ogg",
+    "duration": 167.45
+  },
+  "calm": {
+    "source": "Фон спокойный.mp3",
+    "kind": "music",
+    "url": "/audio/calm.ogg",
+    "duration": 218.7
+  },
+  "ambient-4": {
+    "source": "Фон4.mp3",
+    "kind": "music",
+    "url": "/audio/ambient-4.ogg",
+    "duration": 230.67
+  },
+  "ambient": {
+    "source": "Фон.mp3",
+    "kind": "music",
+    "url": "/audio/ambient.ogg",
+    "duration": 326.99
+  },
+  "ambient-2": {
+    "source": "Фон .mp3",
+    "kind": "music",
+    "url": "/audio/ambient-2.ogg",
+    "duration": 108.0
+  },
+  "christmas": {
+    "source": "Рождество!.mp3",
+    "kind": "music",
+    "url": "/audio/christmas.ogg",
+    "duration": 176.78
+  },
+  "ceremony": {
+    "source": "Торжество.mp3",
+    "kind": "music",
+    "url": "/audio/ceremony.ogg",
+    "duration": 302.82
+  },
+  "tension": {
+    "source": "Фон тревожный .mp3",
+    "kind": "music",
+    "url": "/audio/tension.ogg",
+    "duration": 91.25
+  },
+  "pickup": {
+    "source": "Подбор предметов.mp3",
+    "kind": "effect",
+    "url": "/audio/pickup.ogg",
+    "duration": 0.28
+  },
+  "explosion": {
+    "source": "Небольшой взрыв.wav",
+    "kind": "effect",
+    "url": "/audio/explosion.ogg",
+    "duration": 5.09
+  },
+  "unlock": {
+    "source": "Разблокировка.wav",
+    "kind": "effect",
+    "url": "/audio/unlock.ogg",
+    "duration": 1.4
+  },
+  "success": {
+    "source": "Успех.wav",
+    "kind": "effect",
+    "url": "/audio/success.ogg",
+    "duration": 3.55
+  },
+  "bell": {
+    "source": "Тревожный колокол.mp3",
+    "kind": "effect",
+    "url": "/audio/bell.ogg",
+    "duration": 12.68
+  },
+  "coins": {
+    "source": "Получение денег.wav",
+    "kind": "effect",
+    "url": "/audio/coins.ogg",
+    "duration": 1.45
+  },
+  "magic": {
+    "source": "Магия.wav",
+    "kind": "effect",
+    "url": "/audio/magic.ogg",
+    "duration": 4.81
+  }
+}
