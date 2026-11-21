@@ -9,6 +9,7 @@ git -C "$upstream" init -q
 git -C "$upstream" fetch --depth 1 https://github.com/TuriaArt/3d-gen-TU.git 3d78dcad462feeeb64db7fe667a7c34105a10a45
 git -C "$upstream" checkout --detach -q FETCH_HEAD
 cp "$root/avatar-build/preview.ts" "$upstream/src/hogwarts-preview.ts"
+cp "$root/avatar-build/equipment.ts" "$upstream/src/hogwarts-equipment.ts"
 cd "$upstream"
 npm ci --no-audit --no-fund
 node --import tsx scripts/setup-assets.ts

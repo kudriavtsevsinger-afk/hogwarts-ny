@@ -1,3 +1,5 @@
+import type { SkinnedMesh } from 'three';
+import { equip } from './hogwarts-equipment';
 import { AssetLibrary, fetchSource } from './core/assets';
 import { buildHuman } from './core/human';
 import { DEFAULT_PARAMS, yearsToAge } from './core/params';
@@ -20,10 +22,11 @@ export async function createPreview(canvas: HTMLCanvasElement, assetUrl: string,
     mouth: 'mouth/mouth-scale-horiz', brow: 'eyebrows/eyebrows-trans',
   };
   type Appearance = Partial<Record<keyof typeof sliders, number>> & {
-    base: string; hair: keyof typeof hair; age: number; hairColor: string; bodyHeight?: number; skin?: string;
+    base: string; hair: keyof typeof hair; age: number; hairColor: string; bodyHeight?: number; skin?: string; robe?: Parameters<typeof equip>[2]; wand?: Parameters<typeof equip>[3];
   };
   const sliderValue = (value = 50) => Math.max(-1, Math.min(1, (value - 50) / 50));
-  return async function show(character: Appearance, isSelected: () => boolean) {
+  let equipment: import("three").Mesh[] = [];
+  async function show(character: Appearance, isSelected: () => boolean) {
     const model = await buildHuman(library, {
       ...DEFAULT_PARAMS,
       gender: character.base === 'witch' ? 0 : 1,
@@ -36,8 +39,16 @@ export async function createPreview(canvas: HTMLCanvasElement, assetUrl: string,
       detail: 'medium',
     });
     if (isSelected()) {
+      for (const item of equipment) {
+        item.removeFromParent();
+        item.geometry.dispose();
+        (item.material as import('three').Material).dispose();
+      }
       viewer.show(model);
+      const mesh = (viewer as unknown as { mesh: SkinnedMesh }).mesh;
+      equipment = mesh.isSkinnedMesh ? equip(mesh, model.height, character.robe, character.wand) : [];
       if (!editor) viewer.play(walk);
     }
   };
+  return Object.assign(show, { focusFace: (value: boolean) => viewer.focusFace(value) });
 }

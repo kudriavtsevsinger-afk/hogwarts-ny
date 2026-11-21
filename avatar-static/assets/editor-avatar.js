@@ -30,5 +30,5 @@ export function createAvatar(container, initialCharacter) {
     }, 120);
   }
   update(initialCharacter);
-  return { update };
+  return { update, focusFace(value) { preview.then(show => show.focusFace(value)).catch(() => {}); } };
 }
