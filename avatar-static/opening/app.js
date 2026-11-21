@@ -123,13 +123,6 @@ function hostLobby() {
     qr.append(graphic);
     box.append(qr);
   }
-  for (const href of links) {
-    const link = element('a', href, 'join-link');
-    link.href = href;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    box.append(link);
-  }
   const list = element('ul', '', 'players');
   const members = state.names.filter(p => p.taken);
   for (const p of members) {
@@ -191,23 +184,31 @@ function render() {
   } else if (state.phase === 'credits' && state.card) {
     const scene = element('section', '', 'credits');
     const { id, name, index } = state.card;
-    scene.append(image(id, name), element('h1', name));
+    const figure = element('div', '', 'portrait-scene');
+    figure.append(image(id, name), element('h1', name));
+    scene.append(figure);
     screen.replaceChildren(scene);
     if (!index) whistle();
+  } else if (state.phase === 'lineup') {
+    const scene = element('section', '', 'lineup-scene');
+    const row = element('div', '', 'lineup');
+    for (const p of state.lineup) {
+      const figure = element('figure', '', 'lineup-person');
+      figure.append(image(p.id, p.name), element('figcaption', p.name));
+      row.append(figure);
+    }
+    scene.append(row, element('p', 'Всё началось', 'scene-caption'));
+    screen.replaceChildren(scene);
   } else if (state.phase === 'title') {
     const scene = element('section', '', 'title-card');
-    scene.append(element('p', 'Игра началась', 'eyebrow'), element('h1', state.title));
+    const logo = element('img');
+    logo.src = '/art/game-logo.webp';
+    logo.alt = state.title;
+    scene.append(logo);
     screen.replaceChildren(scene);
   } else if (state.phase === 'train') {
     if (host) {
       const box = panel('За дверью', 'Тишина отступает. Впереди — комната под номером семь. Изнутри доносится голос: «Мы вас ждали».');
-      const line = element('div', '', 'lineup');
-      for (const p of state.lineup) {
-        const card = element('figure');
-        card.append(image(p.id, p.name), element('figcaption', p.name));
-        line.append(card);
-      }
-      box.append(line);
     } else if (state.result) {
       const box = panel(state.player.name, state.result.role);
       const expression = ({'Смельчак':'smile','Мудрец':'neutral','Стратег':'concerned','Хранитель':'smile','Лидер':'surprised','Творец':'surprised'})[state.result.role];

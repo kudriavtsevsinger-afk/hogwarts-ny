@@ -2,6 +2,7 @@ import { questions, score } from './quiz.mjs';
 
 const cast = { oleg: 'Олег', sima: 'Сима', masha: 'Маша', vanya: 'Ваня', liza: 'Лиза', amina: 'Амина' };
 const CARD_MS = 2600;
+const LINEUP_MS = 3600;
 const TITLE_MS = 3900;
 const token = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), value => value.toString(16).padStart(2, '0')).join('');
 function fail(message, status = 409) { throw Object.assign(new Error(message), { status }); }
@@ -26,11 +27,14 @@ async function readBody(request, limit) {
   try { return JSON.parse(raw + decoder.decode()) ?? {}; }
   catch { fail('Некорректный запрос.', 400); }
 }
-function creditsEnd(room) { return room.revealAt + room.lineup.length * CARD_MS + TITLE_MS; }
+function lineupAt(room) { return room.revealAt + room.lineup.length * CARD_MS; }
+function titleAt(room) { return lineupAt(room) + LINEUP_MS; }
+function creditsEnd(room) { return titleAt(room) + TITLE_MS; }
 function phase(room, now = Date.now()) {
   if (!room.revealAt) return room.phase;
   if (now >= creditsEnd(room)) return 'train';
-  if (now >= room.revealAt + room.lineup.length * CARD_MS) return 'title';
+  if (now >= titleAt(room)) return 'title';
+  if (now >= lineupAt(room)) return 'lineup';
   return now >= room.revealAt ? 'credits' : 'crossing';
 }
 function view(room, auth) {
@@ -52,6 +56,7 @@ function view(room, auth) {
     const id = room.lineup[index];
     state.card = { id, name: cast[id], index, count: room.lineup.length };
   }
+  if (current === 'lineup' && host) state.lineup = room.lineup.map(id => ({ id, name: cast[id] }));
   if ((current === 'title' && host) || current === 'train') state.title = 'Тайна последней полуночи';
   if (current === 'train' && player) state.result = score(player.answers);
   if (current === 'train' && host) state.lineup = room.lineup.map(id => ({ id, name: cast[id] }));

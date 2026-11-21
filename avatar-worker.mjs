@@ -16,6 +16,10 @@ export default {
     if (url.pathname.startsWith("/portraits/")) {
       return env.AVATAR_ASSETS.fetch(request);
     }
+    if (url.pathname.startsWith("/art/")) {
+      url.pathname = "/opening" + url.pathname;
+      return env.AVATAR_ASSETS.fetch(new Request(url, request));
+    }
     if (request.method === "GET" && !url.pathname.startsWith("/api/")) {
       url.pathname = "/opening/index.html";
       return env.AVATAR_ASSETS.fetch(new Request(url, request));

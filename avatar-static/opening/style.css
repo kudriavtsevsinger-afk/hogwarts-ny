@@ -27,19 +27,20 @@ progress{width:100%;height:8px;accent-color:var(--accent);margin:0 0 18px}
 .small{font-size:.8rem;padding:6px 9px}
 .hint{margin:12px 0 0;font-size:.9rem}
 #error{position:fixed;bottom:12px;left:12px;right:12px;margin:0;padding:12px 18px;background:#622d38;border-radius:10px;z-index:3}
-body.host[data-phase="crossing"],body.host[data-phase="credits"],body.host[data-phase="title"]{background:#090e18}
-body.host[data-phase="credits"] #screen,body.host[data-phase="title"] #screen{justify-items:center;padding:0;overflow:hidden}
-.credits,.title-card{width:100%;height:100svh;position:relative;display:grid;place-items:center;text-align:center;isolation:isolate;background:radial-gradient(ellipse at 50% 54%,#45424a,#0a0c11 70%)}
-.credits img{position:absolute;bottom:0;height:95%;max-width:94vw;object-fit:contain;object-position:bottom;animation:portrait .75s ease-out both}
-.credits h1{align-self:end;z-index:1;margin:0;width:100%;padding:20px 20px 5vh;background:linear-gradient(transparent,#090d16e8 75%);font-size:clamp(2.5rem,9vw,6.5rem);text-shadow:0 3px 18px #000}
-.title-card{display:flex;flex-direction:column;justify-content:center;padding:24px;background:radial-gradient(ellipse,#383139,#090b10 70%)}
-.title-card h1{font-size:clamp(3rem,9vw,8rem);color:#f9d69c;animation:portrait 1s ease-out both}
-.title-card .eyebrow{font-size:clamp(1rem,3vw,2rem)}
-.lineup{display:flex;flex-wrap:wrap;gap:10px}
-figure{margin:0;width:clamp(72px,12vw,115px)}
+body.host[data-phase="crossing"],body.host[data-phase="credits"],body.host[data-phase="lineup"],body.host[data-phase="title"]{background:#090e18}
+body.host[data-phase="credits"] #screen,body.host[data-phase="lineup"] #screen,body.host[data-phase="title"] #screen{justify-items:center;padding:0;overflow:hidden}
+.credits,.lineup-scene,.title-card{width:100%;height:100svh;position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(180deg,#0713263d 0%,#0b1324a3 100%),url('/art/kings-cross.webp') center/cover no-repeat,#111722}
+.portrait-scene{position:absolute;inset:0;display:grid;place-items:center;animation:portrait .75s ease-out both}
+.portrait-scene img{position:absolute;bottom:12vh;height:86svh;max-width:94vw;object-fit:contain;object-position:bottom;filter:drop-shadow(0 10px 24px #0009)}
+.portrait-scene h1{position:absolute;z-index:1;inset:auto 0 0;margin:0;padding:5vh 16px 4vh;background:linear-gradient(transparent,#050b16ed 42%);font-size:clamp(2rem,7vw,5.5rem);text-align:center;text-shadow:0 3px 18px #000}
+.lineup-scene{display:grid;align-items:stretch}
+.lineup{position:absolute;inset:0 0 0;display:grid;grid-template-columns:repeat(var(--count),minmax(0,1fr));align-items:end;padding:0 1vw 12vh;gap:0}
+.lineup-person{height:100%;position:relative;display:flex;justify-content:center;align-items:flex-end;min-width:0}
+.lineup-person img{height:78svh;max-width:100%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 8px 19px #000b);animation:portrait .8s ease-out both}
+.lineup-person figcaption{position:absolute;bottom:-10vh;left:0;right:0;padding:14px 3px 3vh;text-align:center;font-size:clamp(.85rem,2.7vw,2rem);font-weight:650;text-shadow:0 2px 12px #000;background:linear-gradient(transparent,#050b16dc)}
+.title-card{display:flex;justify-content:center;align-items:flex-end;padding:0 4vw 9vh;background-image:linear-gradient(180deg,#07132650 0%,#0b132488 58%,#050b16f2 100%),url('/art/kings-cross.webp')}
+.title-card img{width:min(76vw,920px);max-height:45svh;object-fit:contain;filter:drop-shadow(0 8px 24px #000c);animation:portrait 1s ease-out both}
 .panel img{display:block;width:min(100%,290px);height:auto}
-.lineup img{width:100%;aspect-ratio:1;object-fit:cover;object-position:top;background:#212a3a;border-radius:8px}
-figcaption{text-align:center;margin-top:4px}
 @keyframes portrait{from{opacity:0;transform:scale(1.035)}to{opacity:1;transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 .credits::after{content:"";position:absolute;inset:auto -10% -10% -10%;height:40%;pointer-events:none;background:radial-gradient(ellipse at 35% 70%,#bfc8db30,transparent 62%),radial-gradient(ellipse at 72% 80%,#d2deed23,transparent 66%);filter:blur(16px);animation:steam 2.6s ease-out both}
