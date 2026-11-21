@@ -1,9 +1,15 @@
 # Production Worker for the character creator.
 name = "hogwarts-new"
-main = "hogwarts-worker.mjs"
+main = "avatar-worker.mjs"
 compatibility_date = "2026-11-21"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "hogwarts-midnight"
 database_id = "f5e696da-91b2-4e11-925b-2e26de7b2ce1"
+
+[assets]
+directory = "./avatar-static"
+binding = "AVATAR_ASSETS"
+html_handling = "none"
+run_worker_first = true
