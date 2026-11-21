@@ -56,7 +56,7 @@ function view(room, auth) {
     const id = room.lineup[index];
     state.card = { id, name: cast[id], index, count: room.lineup.length };
   }
-  if (current === 'lineup' && host) state.lineup = room.lineup.map(id => ({ id, name: cast[id] }));
+  if (['lineup', 'title'].includes(current) && host) state.lineup = Object.keys(cast).filter(id => room.lineup.includes(id)).map(id => ({ id, name: cast[id] }));
   if ((current === 'title' && host) || current === 'train') state.title = 'Тайна последней полуночи';
   if (current === 'train' && player) state.result = score(player.answers);
   if (current === 'train' && host) state.lineup = room.lineup.map(id => ({ id, name: cast[id] }));

@@ -33,13 +33,17 @@ body.host[data-phase="credits"] #screen,body.host[data-phase="lineup"] #screen,b
 .portrait-scene{position:absolute;inset:0;display:grid;place-items:center;animation:portrait .75s ease-out both}
 .portrait-scene img{position:absolute;bottom:12vh;height:86svh;max-width:94vw;object-fit:contain;object-position:bottom;filter:drop-shadow(0 10px 24px #0009)}
 .portrait-scene h1{position:absolute;z-index:1;inset:auto 0 0;margin:0;padding:5vh 16px 4vh;background:linear-gradient(transparent,#050b16ed 42%);font-size:clamp(2rem,7vw,5.5rem);text-align:center;text-shadow:0 3px 18px #000}
-.lineup-scene{display:grid;align-items:stretch}
-.lineup{position:absolute;inset:0 0 0;display:grid;grid-template-columns:repeat(var(--count),minmax(0,1fr));align-items:end;padding:0 1vw 12vh;gap:0}
-.lineup-person{height:100%;position:relative;display:flex;justify-content:center;align-items:flex-end;min-width:0}
-.lineup-person img{height:78svh;max-width:100%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 8px 19px #000b);animation:portrait .8s ease-out both}
-.lineup-person figcaption{position:absolute;bottom:-10vh;left:0;right:0;padding:14px 3px 3vh;text-align:center;font-size:clamp(.85rem,2.7vw,2rem);font-weight:650;text-shadow:0 2px 12px #000;background:linear-gradient(transparent,#050b16dc)}
-.title-card{display:flex;justify-content:center;align-items:flex-end;padding:0 4vw 9vh;background-image:linear-gradient(180deg,#07132650 0%,#0b132488 58%,#050b16f2 100%),url('/art/kings-cross.webp')}
-.title-card img{width:min(76vw,920px);max-height:45svh;object-fit:contain;filter:drop-shadow(0 8px 24px #000c);animation:portrait 1s ease-out both}
+/* Ensemble: one overlapping row, anchored to the bottom like a film poster. */
+.lineup-scene{background-image:linear-gradient(180deg,#07132680 0%,#0b132430 65%,#050b1660 100%),url('/art/kings-cross.webp')}
+.lineup{--portrait-height:min(60svh,calc(100vw / var(--count, 1) * 1.7));position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,calc(var(--count, 1) * 32svh));height:var(--portrait-height);display:flex;align-items:flex-end;isolation:isolate;animation:ensemble-in .8s ease-out both}
+.lineup-person{position:relative;flex:1 1 0;min-width:0;height:100%;margin:0;display:flex;align-items:flex-end;justify-content:center}
+.lineup-person img{display:block;flex:none;width:auto;height:100%;max-width:none;filter:drop-shadow(0 5px 10px #0005)}
+.lineup::after{content:"";position:absolute;z-index:1;inset:auto -10vw 0;height:12svh;background:linear-gradient(transparent,#050b16d9);pointer-events:none}
+.lineup-person figcaption{position:absolute;z-index:2;bottom:2svh;left:0;right:0;margin:0;text-align:center;font-size:clamp(.8rem,2vw,1.6rem);font-weight:650;text-shadow:0 2px 8px #000}
+.ensemble-logo{position:absolute;z-index:2;top:5svh;left:50%;transform:translateX(-50%);width:min(72vw,112svh);aspect-ratio:1798/562;overflow:hidden;animation:logo-in 1.2s ease-out both;filter:drop-shadow(0 6px 16px #0009)}
+.ensemble-logo img{position:absolute;width:106.785%;max-width:none;height:auto;left:-2.169%;top:-46.44%}
+@keyframes ensemble-in{from{opacity:0}to{opacity:1}}
+@keyframes logo-in{from{opacity:0;filter:blur(6px)}to{opacity:1;filter:blur(0)}}
 .panel img{display:block;width:min(100%,290px);height:auto}
 @keyframes portrait{from{opacity:0;transform:scale(1.035)}to{opacity:1;transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}

@@ -189,23 +189,31 @@ function render() {
     scene.append(figure);
     screen.replaceChildren(scene);
     if (!index) whistle();
-  } else if (state.phase === 'lineup') {
-    const scene = element('section', '', 'lineup-scene');
-    const row = element('div', '', 'lineup');
-    for (const p of state.lineup) {
-      const figure = element('figure', '', 'lineup-person');
-      figure.append(image(p.id, p.name), element('figcaption', p.name));
-      row.append(figure);
+  } else if (state.phase === 'lineup' || state.phase === 'title') {
+    // Keep the same ensemble mounted when the logo appears.
+    const castKey = state.lineup.map(p => p.id).join(',');
+    let scene = screen.querySelector('.lineup-scene');
+    if (!scene || scene.dataset.cast !== castKey) {
+      scene = element('section', '', 'lineup-scene');
+      scene.dataset.cast = castKey;
+      const row = element('div', '', 'lineup');
+      row.style.setProperty('--count', state.lineup.length);
+      for (const p of state.lineup) {
+        const figure = element('figure', '', 'lineup-person');
+        figure.append(image(p.id, p.name), element('figcaption', p.name));
+        row.append(figure);
+      }
+      scene.append(row);
+      screen.replaceChildren(scene);
     }
-    scene.append(row, element('p', 'Всё началось', 'scene-caption'));
-    screen.replaceChildren(scene);
-  } else if (state.phase === 'title') {
-    const scene = element('section', '', 'title-card');
-    const logo = element('img');
-    logo.src = '/art/game-logo.webp';
-    logo.alt = state.title;
-    scene.append(logo);
-    screen.replaceChildren(scene);
+    if (state.phase === 'title' && !scene.querySelector('.ensemble-logo')) {
+      const logoFrame = element('div', '', 'ensemble-logo');
+      const logo = element('img');
+      logo.src = '/art/game-logo.webp';
+      logo.alt = state.title;
+      logoFrame.append(logo);
+      scene.append(logoFrame);
+    }
   } else if (state.phase === 'train') {
     if (host) {
       const box = panel('За дверью', 'Тишина отступает. Впереди — комната под номером семь. Изнутри доносится голос: «Мы вас ждали».');
