@@ -4,6 +4,20 @@ window.PrologueScene = (() => {
   const art2 = '/art/scene-02/';
   const castle='/art/castle/';
   let active, stage, previous;
+  const fades=new WeakSet(), frozen=new WeakSet(), ghosts=new Set();
+  const reducedMotion=()=>Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+  function dissolve(node,from,to,remove=false){
+    if(!node)return;
+    if(reducedMotion() || !node.animate){if(remove)node.remove();return;}
+    const a=node.animate([{opacity:from},{opacity:to}],{duration:650,easing:'ease-in-out',fill:'both'});
+    fades.add(a);
+    a.finished.then(()=>{if(remove){node.remove();ghosts.delete(node);}a.cancel();},()=>{if(remove){node.remove();ghosts.delete(node);}});
+  }
+  function leave(node,parent){
+    if(!node)return;
+    node.setAttribute('aria-hidden','true');node.inert=true;node.style.pointerEvents='none';
+    ghosts.add(node);parent.append(node);dissolve(node,1,0,true);
+  }
   const el = (tag, cls, text) => { const n=document.createElement(tag); if(cls)n.className=cls;if(text)n.textContent=text;return n; };
   function img(src, alt, cls) { const n=el('img',cls);n.src=src;n.alt=alt||'';n.draggable=false;return n; }
   function portrait(id, name, expression='neutral') {
@@ -26,6 +40,7 @@ window.PrologueScene = (() => {
     if(boarding || scene.chapter>=3){
       const pose=boarding||scene.visual==='castle-walk'?'back':scene.castPose||'front';
       const row=el('div',boarding?'boarding-cast':'full-cast');row.dataset.pose=pose;row.style.setProperty('--count',scene.cast.length);
+      if(scene.background==='great-hall' && pose==='front')row.classList.add('floor-cast');
       scene.cast.forEach((p,i)=>{const fig=el('figure',boarding?'boarding-person':'full-person');fig.style.setProperty('--i',i);fig.style.setProperty('--travel',(57-i*10)+'vw');fig.append(playerBody(p,pose));row.append(fig);});return row;
     }
     const row=el('div',boarding?'boarding-cast':'lineup');row.style.setProperty('--count',scene.cast.length);
@@ -73,6 +88,8 @@ window.PrologueScene = (() => {
   const dialogue=s=>Boolean(s && ['dialogue','choice','castle-dialogue','vendor','sweets-choice'].includes(s.visual));
   function render(scene,parent) {
     if(active!==scene.key || !stage?.isConnected) {
+      for(const ghost of ghosts)ghost.remove();ghosts.clear();
+      const oldStage=stage;
       const chapterChanged=!stage?.isConnected || (previous?.chapter||1)!==(scene.chapter||1);
       const continueDialogue=stage?.isConnected && dialogue(previous) && dialogue(scene) && !chapterChanged && background(previous).url===background(scene).url;
       active=scene.key;
@@ -83,11 +100,20 @@ window.PrologueScene = (() => {
         if(scene.framing || previous.actor!==scene.actor)stage.dataset.framing=scene.framing||'medium';
         stage.classList.toggle('dark-hall',Boolean(scene.darkHall));
         let actor=stage.querySelector('.story-actor');
-        if(previous.actor!==scene.actor){actor?.remove();if(scene.actor)stage.append(portrait(scene.actor,scene.speaker,scene.expression));}
-        else if(actor){const fresh=portrait(scene.actor,scene.speaker,scene.expression);if(actor.dataset.npc)actor.style.backgroundPosition=fresh.style.backgroundPosition;else if(actor.src!==fresh.src)actor.src=fresh.src;}
+        if(previous.actor!==scene.actor){
+          actor?.remove();const fresh=scene.actor?portrait(scene.actor,scene.speaker,scene.expression):null;
+          if(fresh){stage.append(fresh);dissolve(fresh,0,1);}leave(actor,stage);
+        }else if(actor){
+          const fresh=portrait(scene.actor,scene.speaker,scene.expression);
+          const changed=actor.dataset.npc?actor.style.backgroundPosition!==fresh.style.backgroundPosition:actor.src!==fresh.src;
+          const old=changed?actor.cloneNode(true):null;
+          if(actor.dataset.npc)actor.style.backgroundPosition=fresh.style.backgroundPosition;else if(changed)actor.src=fresh.src;
+          if(changed){dissolve(actor,0,1);leave(old,stage);}
+        }
         if(!scene.confetti)stage.querySelector('.confetti')?.remove();
         else if(!stage.querySelector('.confetti')){const dust=el('div','confetti');for(let i=0;i<28;i++){const bit=el('i');bit.style.setProperty('--i',i);bit.style.setProperty('--x',((i*37)%100)+'%');dust.append(bit);}stage.append(dust);}
-        updateCopy(scene);
+        const oldCopy=stage.querySelector('.story-copy')?.cloneNode(true);
+        updateCopy(scene);dissolve(stage.querySelector('.story-copy'),0,1);leave(oldCopy,stage);
       }else{
       stage=el('section','story-stage');stage.dataset.visual=scene.visual;
       stage.dataset.shot=scene.id||scene.visual;
@@ -117,18 +143,25 @@ window.PrologueScene = (() => {
       if(scene.visual==='steam')stage.append(el('div','steam-curtain'));
       updateCopy(scene);
       parent.replaceChildren(stage);
+      if(oldStage && !chapterChanged && !['blackout','final-flash','final-title','steam','threshold'].includes(scene.visual) && !['blackout','final-flash','steam','threshold'].includes(previous?.visual)){
+        // Cross-dissolve the previous picture over the next; never fade through black.
+        oldStage.classList.add('outgoing-shot');
+        leave(oldStage,stage);
+        for(const a of oldStage.getAnimations({subtree:true})){if(!fades.has(a)){a.pause();frozen.add(a);}}
+      }
       }
       previous=scene;
     }
     const progress=stage.querySelector('.choice-progress');
-    if(progress)progress.textContent='Готово '+(scene.answered||[]).length+' из '+scene.total+((scene.answered||[]).length?' · '+scene.answered.join(', '):'');
+    if(progress && scene.interactive)progress.textContent='Готово '+(scene.answered||[]).length+' из '+scene.total+((scene.answered||[]).length?' · '+scene.answered.join(', '):'');
   }
   function sync(scene,paused) {
     if(!stage?.isConnected || active!==scene?.key)return;
     const time=stage.querySelector('.clock-time');if(time)time.textContent=scene.visual==='clock'&&scene.elapsedMs<4400?'23:58':'23:59';
     // Seek from authoritative scene time after reload and resume; no repeated remounts.
     for(const a of stage.getAnimations({subtree:true})) {
-      if(Math.abs(Number(a.currentTime||0)-scene.elapsedMs)>600)a.currentTime=scene.elapsedMs;
+      if(frozen.has(a))continue;
+      if(!fades.has(a) && Math.abs(Number(a.currentTime||0)-scene.elapsedMs)>600)a.currentTime=scene.elapsedMs;
       if(paused && a.playState!=='paused')a.pause();
       else if(!paused && a.playState==='paused')a.play();
     }
@@ -137,7 +170,7 @@ window.PrologueScene = (() => {
   return {render,sync,preload(){
     if(preloaded)return;preloaded=true;
     for(const name of ['wall','platform','trolley','conductor','caretaker','carriage-door','carriage-window']){const im=new Image();im.src=art+name+'.webp';}
-    for(const name of ['lake','vestibule','great-hall','mcgonagall','hagrid','dumbledore','peeves','clock']){const im=new Image();im.src=castle+name+'.webp';}
+    for(const name of ['lake','vestibule','great-hall','mcgonagall','hagrid','dumbledore','peeves','clock','feast-table','feast-guests','feast-candles']){const im=new Image();im.src=castle+name+'.webp';}
     for(const id of ['oleg','vanya','sima','amina','masha','liza']){const im=new Image();im.src='/art/players/'+id+'.webp';}
     for(const name of ['compartment','vendor','viaduct','sweets']){const im=new Image();im.src=art2+name+'.webp';}
   }};

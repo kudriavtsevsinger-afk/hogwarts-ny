@@ -54,4 +54,7 @@ test('only direct speech in captions, full audio mapping and all sweets outcomes
  for(const id of ['cat-reaction','crowd-reaction','last-whistle','sweets-reactions'])assert.equal(seq.find(s=>s.id===id).text,undefined);
  assert.equal(seq.find(s=>s.id==='sweets-reactions').sweetResults.length,6);
  assert(seq.some(s=>s.visual==='final-title'));assert(seq.some(s=>s.visual==='clock-stopped'));assert(seq.some(s=>s.interaction==='wish'));
+ const feast=seq.slice(seq.findIndex(s=>s.id==='voice-39')+1,seq.findIndex(s=>s.id==='feast-return'));
+ assert.deepEqual(feast.map(s=>s.background),['feast-table','feast-guests','feast-candles']);assert(feast.every(s=>!s.actor&&!s.text&&!s.castGroup));
+ assert(!seq.some(s=>s.id==='portrait-montage'));
 });

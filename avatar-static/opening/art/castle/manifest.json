@@ -77,6 +77,33 @@
         0.482
       ],
       "dialRadius": 0.255
+    },
+    "feast-table": {
+      "url": "/art/castle/feast-table.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
+    },
+    "feast-guests": {
+      "url": "/art/castle/feast-guests.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
+    },
+    "feast-candles": {
+      "url": "/art/castle/feast-candles.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
     }
   },
   "emotions": {
@@ -110,6 +137,7 @@
     "vestibule": "Gothic vestibule, grand stairs, portraits, torches, oak doors, enchanted snow; clear foreground.",
     "great-hall": "Festive Hogwarts Great Hall, floating candles, star ceiling, garlands, enormous tree crowned by gold star, guests in distance, open foreground.",
     "peeves": "Full-body silver translucent ghost based on supplied reference: preserve face, hair and period costume, playful smile, painterly 2D, transparent background.",
-    "clock": "Illustrated gothic bronze and gold Hogwarts clock, celestial blue dial without hands or numbers, transparent. Numerals and animated hands are separate DOM overlays."
+    "clock": "Illustrated gothic bronze and gold Hogwarts clock, celestial blue dial without hands or numbers, transparent. Numerals and animated hands are separate DOM overlays.",
+    "feast": "Warm illustrated Great Hall dinner closeups: abundant table, happy fictional adult guests sharing cakes, candles and Christmas tree. Same style and palette as great-hall reference, 16:9, no text."
   }
 }
