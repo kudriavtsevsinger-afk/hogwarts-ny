@@ -94,7 +94,7 @@ window.PrologueScene = (() => {
   function render(scene,parent) {
     if(active!==scene.key || !stage?.isConnected) {
       for(const ghost of ghosts)ghost.remove();ghosts.clear();
-      const oldStage=stage;
+      const oldStage=stage?.isConnected?stage:null;
       const chapterChanged=!stage?.isConnected || (previous?.chapter||1)!==(scene.chapter||1);
       const continueDialogue=stage?.isConnected && dialogue(previous) && dialogue(scene) && !chapterChanged && background(previous).url===background(scene).url;
       active=scene.key;
@@ -122,7 +122,7 @@ window.PrologueScene = (() => {
       }else{
       stage=el('section','story-stage');stage.dataset.visual=scene.visual;
       stage.dataset.shot=scene.id||scene.visual;
-      if(chapterChanged)stage.append(el('div','chapter-transition'));
+      if(chapterChanged&&scene.chapter!==7)stage.append(el('div','chapter-transition'));
       stage.dataset.chapter=scene.chapter||1;stage.dataset.framing=scene.framing||'medium';if(scene.darkHall)stage.classList.add('dark-hall');
       stage.setAttribute('aria-label',scene.chapter===7?'Акт I · Часовая башня':'Пролог · Сцена '+(scene.chapter||1));
       const bg=background(scene).name;
@@ -172,7 +172,7 @@ window.PrologueScene = (() => {
     }
   }
   let preloaded=false;
-  return {render,sync,preload(){
+  return {render,sync,release(){for(const ghost of ghosts)ghost.remove();ghosts.clear();if(stage){for(const a of stage.getAnimations({subtree:true}))a.cancel();stage.remove();}stage=null;active=null;previous=null;},preload(){
     if(preloaded)return;preloaded=true;
     for(const name of ['wall','platform','trolley','conductor','caretaker','carriage-door','carriage-window']){const im=new Image();im.src=art+name+'.webp';}
     for(const name of ['lake','vestibule','great-hall','mcgonagall','hagrid','dumbledore','peeves','clock','feast-table','feast-guests','feast-candles','feast-desserts','feast-goblets','feast-ornaments','feast-flames','feast-exterior']){const im=new Image();im.src=castle+name+'.webp';}

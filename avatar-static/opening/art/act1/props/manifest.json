@@ -1,0 +1,37 @@
+[
+  {
+    "id": "niche",
+    "path": "avatar-static/opening/art/act1/props/niche.webp",
+    "prompt": "Use case: illustration-story. Asset type: isolated game environment sprite for a Hogwarts clocktower minigame. Create one complete front-facing ornate Gothic stone wall niche, pointed arch silhouette, weathered carved grey-brown stone with subtle bronze inlay tracery and small carved rosettes, believable thick blocks, narrow columns and low stone sill. Inside the arch is a dark deep navy shaded recess with stone backing, large quiet empty space where a ghost can later appear. Interior must be opaque dark stone, not transparent. Outside the outer stone outline must be genuinely transparent alpha. Full complete arch and sill visible, no cropping, centered in a near-square portrait composition with 5% transparent margin. Rich realistic painterly illustration, cinematic warm amber lantern highlights on left and subtle cold blue rim on right, matching illustrated Hogwarts production design, tactile aged stone and brass. No people, no ghost, no words, no numbers, no symbols, no UI, no watermark, no floor or surrounding wall outside the niche.",
+    "generator": "built-in image_gen",
+    "transparentBackground": true
+  },
+  {
+    "id": "watch",
+    "path": "avatar-static/opening/art/act1/props/watch.webp",
+    "prompt": "Use case: illustration-story. Asset type: isolated inventory sprite for a cinematic Hogwarts mystery game. A single exquisite old brass pocket watch with a short elegant loop of linked chain and its bow, open engraved cover tilted behind at left. A readable ivory clock dial with small Roman numeral hour marks and elegant physical hands; no brand, no extra lettering. Full watch and entire chain visible, centered on a truly transparent alpha background with generous margin. Near-front three-quarter view, watch face dominates the composition for legibility when reduced to 80 pixels. Warm antique gold and burnished brass, deep brown patina in engraved swirls, amber candlelight with faint cool blue edge highlight. Realistic painterly illustration matching magical British castle film production design, tactile metal and enamel, not plastic 3D, not flat icon. No floor, no tabletop, no floating dust, no glow outside the item, no text labels, no watermark.",
+    "generator": "built-in image_gen",
+    "transparentBackground": true
+  },
+  {
+    "id": "magnifier",
+    "path": "avatar-static/opening/art/act1/props/magnifier.webp",
+    "prompt": "Use case: illustration-story. Asset type: isolated inventory sprite for a cinematic Hogwarts mystery game. One antique magnifying glass, entirely visible, diagonally oriented from lower left handle toward upper right circular lens. Thick engraved aged brass circular rim, elegant dark mahogany handle with gold filigree collar, subtle patina and tiny use marks. Lens is clear translucent pale blue-grey glass with delicate reflected amber highlights, empty with no letters or objects seen through it. Truly transparent alpha background outside the object, no solid backdrop. Centered square composition with generous transparent margin, silhouette clear when reduced to 80 pixels. Realistic painterly illustration matching magical British castle film production design, warm gold highlights with subtle cool moonlit edge, tactile wood and brass, no plastic 3D, no flat vector icon. No additional objects, no tabletop, no floor, no labels, no readable writing, no watermark, no magical sparks outside the item.",
+    "generator": "built-in image_gen",
+    "transparentBackground": true
+  },
+  {
+    "id": "note",
+    "path": "avatar-static/opening/art/act1/props/note.webp",
+    "prompt": "Use case: illustration-story. Asset type: isolated inventory sprite for a cinematic Hogwarts mystery game. One small folded aged parchment note tied with a dark emerald green silk ribbon and a tiny plain antique brass charm. Beautiful warm ivory and ochre paper, natural uneven edges, convincing folds and faint patina, no writing anywhere. A compact folded rectangular packet angled a little clockwise, ribbon bow and tails completely visible. Full item visible in centered square composition with generous transparent margin, silhouette clear at 80 pixels. Truly transparent alpha background outside the item, no tabletop, no floor. Rich realistic painterly illustration, magical British castle movie production design, warm amber highlights and subtle blue rim, tactile paper and silk. No hands, no people, no other items, no text, no lettering, no symbols, no labels, no watermark, no glow outside the item.",
+    "generator": "built-in image_gen",
+    "transparentBackground": true
+  },
+  {
+    "id": "chest",
+    "path": "avatar-static/opening/art/act1/props/chest.webp",
+    "prompt": "Use case: illustration-story. Asset type: isolated cinematic prop sprite for a Hogwarts mystery game. One small antique dark walnut wooden treasure chest, lid fully open at about 105 degrees, ornate aged brass corner straps and a physical brass clockwork lock, tactile dark wood grain and scratches. The interior is lined with dark forest green velvet. A single large elegant golden winding key is clearly visible resting diagonally inside, with an ornate open bow and a square winding end. The key must read clearly as the discovery. Three-quarter frontal view slightly from above so interior and key are fully visible. Full chest, lid, feet and key entirely within frame, centered landscape-ish square composition, transparent alpha background with margin. Rich realistic painterly illustration, warm amber lantern light and subtle cool blue edge, magical British castle film production design, no plastic 3D, no flat icon. No environment, no tabletop, no floor, no other treasure, no coins, no words, no labels, no watermark, no magic particles outside silhouette.",
+    "generator": "built-in image_gen",
+    "transparentBackground": true
+  }
+]

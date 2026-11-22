@@ -242,7 +242,7 @@ async function applyAction(txn, room, action, auth, input) {
   } else if (action === 'resume' && room.pausedAt != null) {
     if (room.revealAt) room.revealAt += Date.now() - room.pausedAt;
     if (room.storyStartedAt != null) room.storyStartedAt += Date.now() - room.pausedAt;
-    if(room.act1){const delta=Date.now()-room.pausedAt;room.act1.startedAt+=delta;if(room.act1.vote)room.act1.vote.until+=delta;if(room.act1.event)room.act1.event.at+=delta;for(const id of Object.keys(room.act1.hunt?.lastTap||{}))room.act1.hunt.lastTap[id]+=delta;}
+    if(room.act1){const delta=Date.now()-room.pausedAt;room.act1.startedAt+=delta;if(room.act1.noteReadAt!=null)room.act1.noteReadAt+=delta;if(room.act1.gear?.lastTurn)room.act1.gear.lastTurn.at+=delta;if(room.act1.practice?.lastTurn)room.act1.practice.lastTurn.at+=delta;if(room.act1.vote)room.act1.vote.until+=delta;if(room.act1.event)room.act1.event.at+=delta;for(const id of Object.keys(room.act1.hunt?.lastTap||{}))room.act1.hunt.lastTap[id]+=delta;}
     delete room.pausedAt;
   } else if (action === 'restart') {
     room.bank=createBank();delete room.act1;

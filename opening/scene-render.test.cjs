@@ -57,3 +57,15 @@ test('laughter uses smiling portraits only for participants, without neutral bod
   const row=root.querySelector('.happy-cast');assert(row);const portraits=row.querySelectorAll('img');assert.equal(portraits.length,count);assert.deepEqual(portraits.map(p=>p.src),cast.slice(0,count).map(p=>'/portraits/'+p.id+'-smile.webp'));assert.equal(root.querySelector('.player-body'),null);
  }
 });
+
+
+test('Act I handoff releases old cinematic layers and never resurrects a detached stage',()=>{
+ const {renderer,root}=setup(true);
+ const before={key:'prologue:end',chapter:6,visual:'castle-dialogue',background:'great-hall',actor:'dumbledore',speaker:'Дамблдор',text:'Полночь',cast};
+ renderer.render(before,root);renderer.render({...before,key:'prologue:next',text:'Тишина'},root);
+ const old=root.children[0];assert(old.getAnimations().length);renderer.release();assert.equal(root.children.length,0);assert.equal(old.getAnimations().length,0);
+ const title=new Element('section');root.replaceChildren(title);
+ const travel={key:'act:travel',chapter:7,visual:'act-travel',background:'corridor',cast};renderer.render(travel,root);
+ assert.notEqual(root.children[0],old);assert.equal(root.querySelector('.story-actor'),null);assert.equal(root.querySelector('.chapter-transition'),null);assert.equal(root.querySelector('.outgoing-shot'),null);
+ const detached=root.children[0];root.replaceChildren(title);renderer.render({...travel,key:'act:next',background:'tower'},root);assert.notEqual(root.children[0],detached);assert.equal(root.querySelector('.outgoing-shot'),null);
+});

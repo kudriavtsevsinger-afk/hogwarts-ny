@@ -1,6 +1,6 @@
 import {sceneSequence} from './scene01.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import {webcrypto} from 'node:crypto';
-import {beginAct1,tickAct1,act1Action,act1View,stepOf,actKey} from './act1.mjs';import {ACT1_SCRIPT,PAINTINGS} from './act1-script.mjs';import {owners,rotate,shuffle,shortestMove,solutionTable,decode,encode} from './gears.mjs';import {createBank} from './economy.mjs';import {OpeningRoom} from './worker.mjs';
+import {beginAct1,tickAct1,act1Action,act1View,stepOf,actKey} from './act1.mjs';import {ACT1_SCRIPT,PAINTINGS,ITEMS,LEGACY_ACT1_IDS} from './act1-script.mjs';import {owners,rotate,shuffle,shortestMove,solutionTable,decode,encode} from './gears.mjs';import {createBank} from './economy.mjs';import {OpeningRoom} from './worker.mjs';
 globalThis.crypto ||= webcrypto;const cast={oleg:'Олег',sima:'Сима',masha:'Маша',vanya:'Ваня',liza:'Лиза',amina:'Амина'};let nonce=0;
 function roomFor(count=3){const ids=Object.keys(cast).slice(0,count),room={run:'test',host:'display',phase:'story',lineup:ids,players:new Map(ids.map(id=>[id,{id,token:id,answers:Array(8).fill(0)}])),bank:createBank()};beginAct1(room,1000);return room;}
 function call(room,type,payload={},id='oleg',time=room.act1.startedAt){act1Action(room,room.players.get(id),type,{key:actKey(room),nonce:'request-'+(++nonce),...payload},time);}
@@ -9,7 +9,7 @@ for(const count of [3,4,5,6])test(`${count} players complete Act I: voting, all 
  const room=roomFor(count);let now=1000,guard=0,seen=[];
  while(++guard<200){tickAct1(room,now);const s=stepOf(room);seen.push(s.id);if(s.kind==='end')break;
   if(s.durationMs){now=room.act1.startedAt+s.durationMs;continue;}
-  if(['ready','shop','note'].includes(s.kind)){
+  if(['ready','shop','note','practice'].includes(s.kind)){
    if(s.kind==='shop'){
     call(room,'propose',{kind:'item',target:'watch'},'oleg',now);const vote=room.act1.vote;
     for(const id of room.lineup.slice(1,Math.ceil(count*.6)))call(room,'vote',{voteId:vote.id,yes:true},id,now);
@@ -28,7 +28,7 @@ for(const count of [3,4,5,6])test(`${count} players complete Act I: voting, all 
   }
   if(s.kind==='memory'){now=room.act1.startedAt+10000;continue;}
   if(s.kind==='gears'){
-   const snapshot=act1View(room,cast,'oleg',false,now);assert.equal(snapshot.act.gears.target,undefined);const g=room.act1.gear;
+   const snapshot=act1View(room,cast,'oleg',false,now);assert.deepEqual(snapshot.act.gears.target,room.act1.gear.target);const g=room.act1.gear;
    let moves=0;while(stepOf(room).kind==='gears'){const next=shortestMove(g.current,g.target,g.jam);assert(next.distance>0);const id=owners(room.lineup,6)[next.move].owner;call(room,'turn',{gear:next.move},id,now);assert(++moves<100);}
    continue;
   }
@@ -94,4 +94,25 @@ test('prologue finale enters Act I automatically once, retaining cast and bank',
  const storage={get:async()=>structuredClone(room),put:async(k,v)=>room=structuredClone(v),transaction:async fn=>fn(storage)};const server=new OpeningRoom({storage});
  const get=async()=>{const response=await server.fetch(new Request('https://room/state',{headers:{Authorization:'Bearer display'}}));assert.equal(response.status,200);return response.json();};
  try{assert.equal((await get()).phase,'story');time=6000;const first=await get();assert.equal(first.phase,'act1');assert.equal(first.act.id,'act-title');assert.equal(first.bank.balance,25);assert.equal(first.act.total,4);assert.deepEqual(first.act.cast.map(p=>p.id),room.lineup);time=6100;const again=await get();assert.equal(again.act.key,first.act.key);assert.equal(again.act.spent,0);assert.equal(room.act1.startedAt,6000);}finally{Date.now=original;}
+});
+
+test('shop avoids task spoilers and all unconsumed purchases stay in the shared inventory',()=>{
+ for(const item of ITEMS)assert(!/шестер|портрет|охот|поим|загад|Пивз/i.test(item.description+' '+item.name));
+ const room=roomFor();stage(room,'shop');for(const target of ['watch','magnifier','note']){call(room,'propose',{kind:'item',target});call(room,'vote',{voteId:room.act1.vote.id,yes:true},'sima');}
+ const view=(host=false)=>act1View(room,cast,'oleg',host,1000).act;
+ assert.deepEqual(view().pouch.map(i=>i.id),['watch','magnifier','note']);assert.deepEqual(view(true).pouch,view().pouch);assert(view().pouch.every(i=>!i.usable));
+ stage(room,'vendor-farewell');assert.equal(view().pouch.length,3);assert.throws(()=>call(room,'use',{item:'watch'}));assert.equal(view().pouch.length,3);
+ stage(room,'note');assert.equal(view().note,null);call(room,'use',{item:'note'});assert(view().note);assert.equal(view().noteReadingMs,14000);assert(!view().pouch.some(i=>i.id==='note'));assert.throws(()=>call(room,'use',{item:'note'}));
+ stage(room,'portraits');assert(view().pouch.find(i=>i.id==='magnifier').usable);call(room,'use',{item:'magnifier',painting:3});assert.equal(view().paintings[3].reveal,'ЗИМА');assert.deepEqual(view().pouch.map(i=>i.id),['watch']);
+ const reloaded=structuredClone(room);assert.deepEqual(act1View(reloaded,cast,'sima',false).act.pouch.map(i=>i.id),['watch']);
+ stage(room,'gear-intro-1');tickAct1(room,1000+stepOf(room).durationMs);tickAct1(room,room.act1.startedAt+10000);call(room,'use',{item:'watch'},'oleg',room.act1.startedAt);assert.equal(view().pouch.length,0);assert.equal(room.act1.gear.extension,30000);
+});
+test('practice demonstrates coupling without timer, coin changes or production-round progress',()=>{
+ const room=roomFor(3);stage(room,'mechanism-explanation');tickAct1(room,1000+stepOf(room).durationMs);assert.equal(stepOf(room).kind,'practice');const id=owners(room.lineup,6)[0].owner;call(room,'practice-turn',{gear:0},id,room.act1.startedAt);assert.deepEqual(room.act1.practice.current,[1,5,0,0,0,5]);assert.equal(room.bank.balance,30);assert.equal(room.act1.gear,undefined);
+ tickAct1(room,room.act1.startedAt+600000);assert.equal(stepOf(room).kind,'practice');assert.throws(()=>call(room,'practice-turn',{gear:0},'sima',room.act1.startedAt));for(const id of room.lineup)call(room,'ready',{},id,room.act1.startedAt);assert.equal(stepOf(room).id,'gear-intro-1');
+});
+test('saved rooms migrate by stable scene id, keeping progress and purchased items',()=>{
+ for(const id of ['shop','hunt','portraits','gear-play-2','act2-title']){
+  const room=roomFor();delete room.act1.version;delete room.act1.stepId;room.act1.index=LEGACY_ACT1_IDS.indexOf(id);room.act1.inventory.watch=true;room.act1.solved=[2];room.act1.hunt={schedule:Array(24).fill(0),hits:[],misses:0};room.act1.gear={round:2,target:[0,0,0,0,0,0],current:[1,5,0,0,0,5],extension:0};const old=actKey(room);assert(tickAct1(room,1000));assert.equal(stepOf(room).id,id);assert.equal(room.act1.version,2);assert.notEqual(actKey(room),old);assert(room.act1.inventory.watch);assert.deepEqual(room.act1.solved,[2]);assert.equal(tickAct1(room,1000),false);
+ }
 });
