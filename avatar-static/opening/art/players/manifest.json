@@ -1,0 +1,64 @@
+{
+  "frames": [
+    "front",
+    "back",
+    "toast"
+  ],
+  "layout": "Three equal columns, full body in every frame; framing performed in CSS.",
+  "images": {
+    "oleg": {
+      "url": "/art/players/oleg.webp",
+      "size": [
+        1536,
+        1024
+      ],
+      "reference": "/portraits/oleg-neutral.webp",
+      "transparent": true
+    },
+    "vanya": {
+      "url": "/art/players/vanya.webp",
+      "size": [
+        1536,
+        1024
+      ],
+      "reference": "/portraits/vanya-neutral.webp",
+      "transparent": true
+    },
+    "sima": {
+      "url": "/art/players/sima.webp",
+      "size": [
+        1536,
+        1024
+      ],
+      "reference": "/portraits/sima-neutral.webp",
+      "transparent": true
+    },
+    "amina": {
+      "url": "/art/players/amina.webp",
+      "size": [
+        1536,
+        1024
+      ],
+      "reference": "/portraits/amina-neutral.webp",
+      "transparent": true
+    },
+    "masha": {
+      "url": "/art/players/masha.webp",
+      "size": [
+        1536,
+        1024
+      ],
+      "reference": "/portraits/masha-neutral.webp",
+      "transparent": true
+    },
+    "liza": {
+      "url": "/art/players/liza.webp",
+      "size": [
+        1536,
+        1024
+      ],
+      "reference": "/portraits/liza-neutral.webp",
+      "transparent": true
+    }
+  }
+}
