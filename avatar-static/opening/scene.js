@@ -37,6 +37,11 @@ window.PrologueScene = (() => {
     n.setAttribute('role','img');n.setAttribute('aria-label',p.name);return n;
   }
   function group(scene, boarding=false) {
+    if(scene.castExpression==='smile' && !boarding){
+      const row=el('div','happy-cast');row.style.setProperty('--count',scene.cast.length);
+      for(const p of scene.cast){const fig=el('figure','happy-person');fig.append(img('/portraits/'+p.id+'-smile.webp',p.name));row.append(fig);}
+      return row;
+    }
     if(boarding || scene.chapter>=3){
       const pose=boarding||scene.visual==='castle-walk'?'back':scene.castPose||'front';
       const row=el('div',boarding?'boarding-cast':'full-cast');row.dataset.pose=pose;row.style.setProperty('--count',scene.cast.length);

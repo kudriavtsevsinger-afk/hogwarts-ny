@@ -88,8 +88,14 @@ async function create() {
 function accept(next) {
   state = next;
   let bank=document.querySelector('#team-bank');
-  if(!bank){bank=element('aside','','team-bank');bank.id='team-bank';bank.setAttribute('role','status');bank.setAttribute('aria-live','polite');bank.setAttribute('aria-atomic','true');const icon=element('span','✦','bank-coin');icon.setAttribute('aria-hidden','true');bank.append(icon,element('span','Общий банк','bank-label'),element('strong','','bank-amount'));document.body.append(bank);}
+  if(!bank){bank=element('aside','','team-bank');bank.id='team-bank';bank.setAttribute('role','status');bank.setAttribute('aria-live','polite');bank.setAttribute('aria-atomic','true');const icon=element('span','✦','bank-coin');icon.setAttribute('aria-hidden','true');bank.append(icon,element('span','Общий банк','bank-label'),element('strong','','bank-amount'));const hud=element('div','','game-hud');hud.id='game-hud';const roster=element('div','','team-roster');roster.id='team-roster';roster.setAttribute('role','group');roster.setAttribute('aria-label','Участники');hud.append(roster,bank);document.body.append(hud);}
   bank.hidden=!state.bank;
+  const hud=document.querySelector('#game-hud'),roster=document.querySelector('#team-roster');
+  hud.hidden=!state.bank;
+  const members=host && ['lineup','title','story'].includes(state.phase)?(state.scene?.cast || state.lineup || []):[];
+  roster.hidden=!members.length;
+  const rosterKey=members.map(p=>p.id+':'+p.name).join('|');
+  if(roster.dataset.members!==rosterKey){roster.dataset.members=rosterKey;roster.replaceChildren(...members.map(p=>{const avatar=element('span','','team-avatar');avatar.title=p.name;avatar.append(image(p.id,p.name));return avatar;}));}
   document.body.classList.toggle('has-bank',Boolean(state.bank));
   if(state.bank){const amount=String(state.bank.balance);if(bank.querySelector('.bank-amount').textContent!==amount)bank.querySelector('.bank-amount').textContent=amount;bank.setAttribute('aria-label','Общий банк: '+amount+' монет');bank.title='Монеты команды на подсказки';}
   if (host) window.GameSound.sync(state);
@@ -105,6 +111,7 @@ function accept(next) {
 }
 function entry() {
   const bank=document.querySelector('#team-bank');if(bank)bank.hidden=true;
+  const hud=document.querySelector('#game-hud');if(hud)hud.hidden=true;
   window.TicketCamera.close();
   if (host) {
     const box = panel('Собираем историю', 'Подготавливаем общий экран…');

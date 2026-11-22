@@ -49,3 +49,11 @@ test('illustrated clock has separate accurate dial and holds 23:59 after stoppin
  const {renderer,root}=setup();const s={key:'clock',chapter:6,visual:'clock',background:'great-hall',cast,clock:true,elapsedMs:0};renderer.render(s,root);
  assert.equal(root.querySelector('.clock-art').src,'/art/castle/clock.webp');assert.equal(root.querySelectorAll('.clock-number').length,12);assert.equal(root.querySelectorAll('.clock-number')[11].textContent,'XII');assert(root.querySelector('.minute-hand'));renderer.sync({...s,elapsedMs:4300},false);assert.equal(root.querySelector('.clock-time').textContent,'23:58');renderer.sync({...s,elapsedMs:4400},false);assert.equal(root.querySelector('.clock-time').textContent,'23:59');renderer.render({...s,key:'stopped',visual:'clock-stopped'},root);renderer.sync({...s,key:'stopped',visual:'clock-stopped',elapsedMs:0},true);assert.equal(root.querySelector('.clock-time').textContent,'23:59');
 });
+
+test('laughter uses smiling portraits only for participants, without neutral body sprites',()=>{
+ const {renderer,root}=setup();
+ for(let count=1;count<=6;count++){
+  renderer.render({key:'smile:'+count,chapter:5,visual:'hall-guests',background:'great-hall',cast:cast.slice(0,count),castGroup:true,castExpression:'smile'},root);
+  const row=root.querySelector('.happy-cast');assert(row);const portraits=row.querySelectorAll('img');assert.equal(portraits.length,count);assert.deepEqual(portraits.map(p=>p.src),cast.slice(0,count).map(p=>'/portraits/'+p.id+'-smile.webp'));assert.equal(root.querySelector('.player-body'),null);
+ }
+});

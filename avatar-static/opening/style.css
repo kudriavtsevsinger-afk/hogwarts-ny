@@ -311,12 +311,22 @@ body.host[data-phase="story"] #screen{display:block;padding:0;height:100svh;over
 .story-stage[data-visual="feast-closeup"] .story-background{animation:none}
 
 /* Shared team balance, outside the cinematic scene so dissolves never duplicate it. */
-.team-bank{position:fixed;right:max(22px,env(safe-area-inset-right));top:max(20px,env(safe-area-inset-top));z-index:20;display:flex;align-items:center;gap:10px;padding:10px 16px;border:1px solid #d5ad634d;border-radius:28px;background:linear-gradient(125deg,#151b25ee,#201c18dd);box-shadow:0 5px 24px #0005;color:#f4dca5;pointer-events:none;backdrop-filter:blur(10px)}
+.game-hud{position:fixed;right:max(22px,env(safe-area-inset-right));top:max(20px,env(safe-area-inset-top));z-index:20;display:flex;align-items:center;gap:14px;pointer-events:none;max-width:calc(100vw - 32px)}
+.game-hud[hidden],.team-roster[hidden]{display:none}
+.team-roster{display:flex;align-items:center;gap:7px}
+.team-avatar{display:block;width:44px;height:44px;border:1px solid #d5ad6399;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 20%,#6c5836,#18202b);box-shadow:0 3px 12px #0008}
+.team-avatar img{width:100%;height:100%;object-fit:cover;object-position:center top;transform:scale(1.35);transform-origin:50% 0}
+.team-bank{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:10px 16px;border:1px solid #d5ad634d;border-radius:28px;background:linear-gradient(125deg,#151b25ee,#201c18dd);box-shadow:0 5px 24px #0005;color:#f4dca5;pointer-events:none;backdrop-filter:blur(10px)}
 .team-bank[hidden]{display:none}.bank-label{font-size:12px;letter-spacing:.035em;color:#d9ceb7}.bank-amount{font-size:24px;line-height:1;font-weight:650;font-variant-numeric:tabular-nums;min-width:2ch;text-align:right}
 .bank-coin{display:grid;place-items:center;width:28px;height:28px;border:2px solid #d3a34c;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe5a0,#bd7c27);box-shadow:inset 0 0 0 2px #70461c66;color:#77501e;font-size:19px;text-shadow:0 1px #ffeab9}
 body:not(.host).has-bank #screen{padding-top:100px}
-.story-stage[data-visual="feast-flight"] .story-background{animation:festive-flight 9s linear both}
+.story-stage[data-visual="feast-flight"] .story-background{animation:festive-flight 5s linear both}
 .story-stage[data-visual="feast-flight"]::after{opacity:.12}
 @keyframes festive-flight{from{transform:scale(1.14) translate(-2%,1%)}to{transform:scale(1.055) translate(2%,-1%)}}
-@media(max-width:600px){.team-bank{top:max(12px,env(safe-area-inset-top));right:12px;padding:8px 12px;gap:8px}.bank-amount{font-size:21px}.bank-label{font-size:11px}}
+@media(max-width:600px){.game-hud{top:max(12px,env(safe-area-inset-top));right:12px;gap:8px;flex-wrap:wrap;justify-content:flex-end}.team-roster{gap:3px}.team-avatar{width:28px;height:28px}.team-bank{padding:8px 12px;gap:8px}.bank-amount{font-size:21px}.bank-label{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.story-stage[data-visual="feast-flight"] .story-background{animation:none}}
+
+/* Warm reaction close-up: transparent smiling portraits share the hall background. */
+.happy-cast{position:absolute;inset:auto 0 0;display:flex;align-items:flex-end;justify-content:center;height:min(78svh,calc(145vw / var(--count)));z-index:1;overflow:hidden}
+.happy-person{margin:0 -1vw;flex:0 0 min(32vw,calc(102vw / var(--count)));height:100%;display:flex;align-items:flex-end;justify-content:center}
+.happy-person img{display:block;width:auto;height:100%;max-width:none;object-fit:contain;filter:drop-shadow(0 5px 12px #0005)}

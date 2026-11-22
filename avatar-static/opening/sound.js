@@ -78,12 +78,14 @@ window.GameSound=(()=>{
    const changed=nextTrack!==desired||nextPaused!==paused||level!==nextLevel||musicBoost!==nextBoost;
    desired=nextTrack;paused=nextPaused;level=nextLevel;musicBoost=nextBoost;
    const key=state.scene?.key||state.run+':'+state.phase;
+   const restartMusic=sceneKey!==key && Boolean(state.scene?.musicRestart);
+   if(restartMusic){music.pause();music.currentTime=0;}
    if(sceneKey!==key){
     const carry=state.scene?.id==='steam-transition'&&sceneKey===state.run+':'+(Number(state.scene.key.split(':').pop())-1);
     sceneKey=key;stopVoice();if(!carry)stopEffects();if(state.phase==='lobby')music.currentTime=0;
     if(unlocked&&!paused)volume(targetVolume());
    }
-   if(changed)reconcile();cues();
+   if(changed||restartMusic)reconcile();cues();
   }
  };
 })();

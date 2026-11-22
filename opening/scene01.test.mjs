@@ -56,6 +56,9 @@ test('only direct speech in captions, full audio mapping and all sweets outcomes
  assert(seq.some(s=>s.visual==='final-title'));assert(seq.some(s=>s.visual==='clock-stopped'));assert(seq.some(s=>s.interaction==='wish'));
  const feast=seq.slice(seq.findIndex(s=>s.id==='voice-39')+1,seq.findIndex(s=>s.id==='feast-return'));
  assert.deepEqual(feast.map(s=>s.background),['feast-table','feast-desserts','feast-guests','feast-goblets','feast-ornaments','feast-flames','feast-candles','feast-exterior']);assert(feast.every(s=>!s.actor&&!s.text&&!s.castGroup&&s.music==='christmas'&&s.musicBoost===1.6));
- assert.equal(feast.reduce((sum,s)=>sum+s.durationMs,0),45000);assert.equal(feast.at(-1).outdoor,true);assert.equal(seq.find(s=>s.id==='voice-40').musicBoost,undefined);
+ assert.equal(feast.reduce((sum,s)=>sum+s.durationMs,0),26000);assert.equal(feast.at(-1).outdoor,true);assert.equal(seq.find(s=>s.id==='voice-40').musicBoost,undefined);
  assert(!seq.some(s=>s.id==='portrait-montage'));
+ assert.equal(feast[0].musicRestart,true);assert(feast.slice(1).every(s=>!s.musicRestart));
+ assert(!seq.some(s=>s.id==='hall-guests'),'no player introduction at the start of the hall scene');
+ assert.equal(seq.find(s=>s.id==='hall-laugh').castExpression,'smile');
 });
