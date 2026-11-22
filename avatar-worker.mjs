@@ -9,7 +9,7 @@ export default {
     if (url.pathname === OPENING_PATH || url.pathname.startsWith(OPENING_PATH + "/")) {
       return opening(request, env);
     }
-    if (["/app.js", "/style.css", "/qrcode.min.js", "/sound.js", "/scene.js", "/tickets.js"].includes(url.pathname)) {
+    if (["/app.js", "/style.css", "/qrcode.min.js", "/sound.js", "/scene.js", "/tickets.js", "/act1.js"].includes(url.pathname)) {
       url.pathname = "/opening" + url.pathname;
       return env.AVATAR_ASSETS.fetch(new Request(url, request));
     }
@@ -41,3 +41,4 @@ export default {
     return game.fetch(request, env, context);
   }
 };
+

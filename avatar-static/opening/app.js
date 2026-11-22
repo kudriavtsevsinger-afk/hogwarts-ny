@@ -92,7 +92,7 @@ function accept(next) {
   bank.hidden=!state.bank;
   const hud=document.querySelector('#game-hud'),roster=document.querySelector('#team-roster');
   hud.hidden=!state.bank;
-  const members=host && ['lineup','title','story'].includes(state.phase)?(state.scene?.cast || state.lineup || []):[];
+  const members=host && ['lineup','title','story','act1'].includes(state.phase)?(state.scene?.cast || state.lineup || []):[];
   roster.hidden=!members.length;
   const rosterKey=members.map(p=>p.id+':'+p.name).join('|');
   if(roster.dataset.members!==rosterKey){roster.dataset.members=rosterKey;roster.replaceChildren(...members.map(p=>{const avatar=element('span','','team-avatar');avatar.title=p.name;avatar.append(image(p.id,p.name));return avatar;}));}
@@ -213,6 +213,10 @@ function render() {
     if(host)window.PrologueScene.preload();
     if (!host) adminControls();
     return;
+  }
+  if(state.phase==='act1'){
+    window.ActOne.render(state,screen,host,async payload=>{revision++;const next=await api('/act',payload);revision++;accept(next);},state.player?.id);
+    if(!host)adminControls();return;
   }
   if (state.phase === 'story') {
     if(host) window.PrologueScene.render(state.scene,screen);
@@ -376,4 +380,6 @@ async function poll() {
 window.addEventListener('pageshow',()=>{rendered=undefined;void poll();});
 entry();
 void poll();
-setInterval(poll, 400);
+setInterval(()=>{if(state?.act?.kind==='hunt'||state?.act?.kind==='gears')void poll();},200);
+setInterval(()=>{if(!['hunt','gears'].includes(state?.act?.kind))void poll();},400);
+

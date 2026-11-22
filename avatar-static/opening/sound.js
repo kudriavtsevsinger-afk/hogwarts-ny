@@ -4,6 +4,7 @@ window.GameSound=(()=>{
  const gate=document.querySelector('#sound-gate');
  let unlocked=false,ctx,master,current=null,desired=null,paused=false,level=.45,musicBoost=1,latest;
  let fade,transition,musicJob=0,sceneKey,voiceSource,pendingVoice,playedVoice,pendingCue,playedCue;
+ let playedEvent,pendingEvent;
  let noteKey,doneKey,failedKey,ackPending=false,complete=async()=>{};
  const effects=new Set(),raw=new Map(),decoded=new Map();
  function load(url){if(!raw.has(url))raw.set(url,fetch(url,globalThis.AbortSignal?.timeout?{signal:AbortSignal.timeout(8000)}:{}).then(r=>{if(!r.ok)throw Error('Audio unavailable');return r.arrayBuffer();}).catch(e=>{raw.delete(url);throw e;}));return raw.get(url);}
@@ -38,6 +39,13 @@ window.GameSound=(()=>{
    source.connect(gain).connect(master);source.onended=()=>{effects.delete(source);source.disconnect();gain.disconnect();};effects.add(source);source.start(0,offset,duration);playedCue=key;
   }catch{}finally{if(pendingCue===key)pendingCue=null;}
  }
+ async function liveEvent(event){
+  if(!event?.cue||!unlocked||paused||!level||!ctx||playedEvent===event.id||pendingEvent===event.id)return;
+  pendingEvent=event.id;
+  try{const data=await buffer('/audio/'+event.cue+'.ogg');if(latest?.soundEvent?.id!==event.id||paused||!level)return;
+   const source=ctx.createBufferSource(),gain=ctx.createGain();source.buffer=data;gain.gain.value=.6;source.connect(gain).connect(master);effects.add(source);source.onended=()=>{effects.delete(source);source.disconnect();gain.disconnect();};source.start(0,0,Math.min(data.duration,1.5));playedEvent=event.id;
+  }catch{}finally{if(pendingEvent===event.id)pendingEvent=null;}
+ }
  function reconcile(){
   clearTimeout(transition);const job=++musicJob;if(!unlocked)return;
   master.gain.setTargetAtTime(level,ctx.currentTime,.08);
@@ -69,14 +77,14 @@ window.GameSound=(()=>{
   onComplete(fn){complete=fn;},
   init(display){gate.hidden=!display;if(display)for(let i=1;i<=43;i++)void load('/audio/voice/'+String(i).padStart(2,'0')+'.ogg').catch(()=>{});},
   sync(state){
-   latest=state;const track=state.phase==='story'?state.scene?.music:({crossing:'intro',credits:'intro',lineup:'intro',title:'intro'})[state.phase]||null;
+   latest=state;const track=['story','act1'].includes(state.phase)?state.scene?.music:({crossing:'intro',credits:'intro',lineup:'intro',title:'intro'})[state.phase]||null;
    const nextLevel=state.audio?.enabled===false?0:(state.audio?.volume??.45);
    const nextPaused=Boolean(state.paused);
    const breakMusic=state.scene?.musicBreak&&state.scene.elapsedMs>=2000;
    const nextTrack=breakMusic?null:track;
    const nextBoost=state.phase==='story'&&state.scene?.musicBoost===1.6?1.6:1;
    const changed=nextTrack!==desired||nextPaused!==paused||level!==nextLevel||musicBoost!==nextBoost;
-   desired=nextTrack;paused=nextPaused;level=nextLevel;musicBoost=nextBoost;
+   desired=nextTrack;paused=nextPaused;level=nextLevel;musicBoost=nextBoost;music.playbackRate=state.scene?.musicUrgent?1.12:1;
    const key=state.scene?.key||state.run+':'+state.phase;
    const restartMusic=sceneKey!==key && Boolean(state.scene?.musicRestart);
    if(restartMusic){music.pause();music.currentTime=0;}
@@ -87,7 +95,7 @@ window.GameSound=(()=>{
    }
    // The frozen clock cuts the entire soundscape immediately, including pending fades.
    if(state.scene?.soundCut){clearInterval(fade);clearTimeout(transition);musicJob++;music.pause();music.volume=0;stopVoice();stopEffects();return;}
-   if(changed||restartMusic)reconcile();cues();
+   if(changed||restartMusic)reconcile();cues();void liveEvent(state.soundEvent);
   }
  };
 })();

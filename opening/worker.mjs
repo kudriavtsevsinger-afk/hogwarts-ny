@@ -2,6 +2,7 @@ import { questions, score } from './quiz.mjs';
 import { introductions, storyPosition } from './scene01.mjs';
 import { sweets } from './scene02.mjs';
 import { createBank, bankView } from './economy.mjs';
+import { beginAct1, tickAct1, act1Action, act1View } from './act1.mjs';
 
 const cast = { oleg: 'Олег', sima: 'Сима', masha: 'Маша', vanya: 'Ваня', liza: 'Лиза', amina: 'Амина' };
 const CARD_MS = 2600;
@@ -33,6 +34,7 @@ function lineupAt(room) { return room.revealAt + room.lineup.length * CARD_MS; }
 function titleAt(room) { return lineupAt(room) + LINEUP_MS; }
 function phase(room, now = Date.now()) {
   now = room.pausedAt ?? now;
+  if (room.phase === 'act1') return 'act1';
   if (room.phase === 'story') return 'story';
   if (!room.revealAt) return room.phase;
   if (now >= titleAt(room)+5000) return 'story';
@@ -92,6 +94,7 @@ function view(room, auth) {
       state.waiting=pos.step.interactive?'Ждём участников: '+room.lineup.filter(id=>!answered.includes(id)).map(id=>cast[id]).join(', '):null;
     }
   }
+  if(current==='act1' && (host||player))Object.assign(state,act1View(room,cast,player?.id,host,now));
   return state;
 }
 export const OPENING_PATH = '/api/opening/rooms';
@@ -110,7 +113,7 @@ export async function serveOpening(request, env) {
     }
     fail('Не удалось создать комнату. Попробуй ещё раз.', 503);
   }
-  const match = route.match(/^\/(\d{6})(\/(?:join|answer|start|cross|remove|pause|resume|restart|sound|next|introduce|ticket|sweet|wish|complete))?$/);
+  const match = route.match(/^\/(\d{6})(\/(?:join|answer|start|cross|remove|pause|resume|restart|sound|next|introduce|ticket|sweet|wish|complete|act))?$/);
   if (!match) fail('Страница не найдена.', 404);
   const [, code, action = '/state'] = match;
   const stub = env.OPENING_ROOM.get(env.OPENING_ROOM.idFromName(code));
@@ -140,9 +143,13 @@ export class OpeningRoom {
         });
       }
       if (method === 'GET') {
-        let room = await this.storage.get('room');
-        if (!room) fail('Комната не найдена. Проверь код.', 404);
-        if(!room.bank)room=await this.storage.transaction(async txn=>{const latest=await txn.get('room');if(!latest.bank){latest.bank=createBank();await txn.put('room',latest);}return latest;});
+        const room = await this.storage.transaction(async txn=>{
+          const latest=await txn.get('room');if(!latest)fail('Комната не найдена. Проверь код.',404);
+          let dirty=false;if(!latest.bank){latest.bank=createBank();dirty=true;}
+          if(phase(latest)==='story' && latest.pausedAt==null){const p=storyPosition(latest,cast);if(p.step.end && p.elapsedMs>=5000){beginAct1(latest,Date.now());dirty=true;}}
+          if(tickAct1(latest))dirty=true;
+          if(dirty)await txn.put('room',latest);return latest;
+        });
         if (action === 'state') return json(view(room, auth));
         fail('Страница не найдена.', 404);
       }
@@ -158,6 +165,10 @@ export class OpeningRoom {
 }
 async function applyAction(txn, room, action, auth, input) {
   room.bank ||= createBank();
+  if(action==='act'){
+    const player=[...room.players.values()].find(p=>p.token===auth);
+    act1Action(room,player,input.type,input);await txn.put('room',room);return json(view(room,auth));
+  }
   const advance=(pos)=>{room.phase='story';room.storyIndex=pos.index+1;room.storyStartedAt=Date.now();};
   const advanceWhenReady=(pos,responses)=>{if(room.lineup.every(id=>Object.hasOwn(responses,id)))advance(pos);};
   if(action==='complete') {
@@ -231,9 +242,10 @@ async function applyAction(txn, room, action, auth, input) {
   } else if (action === 'resume' && room.pausedAt != null) {
     if (room.revealAt) room.revealAt += Date.now() - room.pausedAt;
     if (room.storyStartedAt != null) room.storyStartedAt += Date.now() - room.pausedAt;
+    if(room.act1){const delta=Date.now()-room.pausedAt;room.act1.startedAt+=delta;if(room.act1.vote)room.act1.vote.until+=delta;if(room.act1.event)room.act1.event.at+=delta;for(const id of Object.keys(room.act1.hunt?.lastTap||{}))room.act1.hunt.lastTap[id]+=delta;}
     delete room.pausedAt;
   } else if (action === 'restart') {
-    room.bank=createBank();
+    room.bank=createBank();delete room.act1;
     room.phase = 'lobby';
     delete room.revealAt; delete room.lineup; delete room.pausedAt;
     delete room.storyIndex; delete room.storyStartedAt; delete room.introductions; delete room.tickets; delete room.sweets; delete room.wishes;
@@ -257,3 +269,4 @@ async function applyAction(txn, room, action, auth, input) {
   await txn.put("room", room);
   return json(view(room, auth));
 }
+

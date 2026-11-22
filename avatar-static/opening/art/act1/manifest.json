@@ -1,0 +1,16 @@
+[
+  {
+    "id": "corridor",
+    "path": "avatar-static/opening/art/act1/corridor.webp",
+    "prompt": "Use case: illustration-story. Create a NEW 16:9 cinematic background for the first act of a Hogwarts New Year mystery game. Use the provided Great Hall image ONLY as a rendering style, color, material and detail reference, not as the scene to edit. Scene: an empty Hogwarts castle corridor leading toward a spiral staircase ascending into the clock tower, late winter night. A richly illustrated realistic painterly environment, warm amber torchlight on ancient stone, blue moonlight from narrow Gothic windows, subtle holiday greenery around an arch. Ancient gilded portrait frames with small subdued painted wizards hang along both side walls; they are background scenery, not readable puzzle objects. Beautiful coherent perspective with a broad unobstructed foreground stone floor and open central space for character overlays and UI. The stair begins toward the upper right distance, iron rail and worn stone treads. No live characters, no ghost, no text, no numbers, no labels, no UI, no watermark. Keep foreground center and lower quarter visually quiet for readable dialogue. Full bleed landscape 16:9.",
+    "generator": "built-in image_gen",
+    "reference": "Existing Great Hall illustration from the prologue"
+  },
+  {
+    "id": "tower",
+    "path": "avatar-static/opening/art/act1/tower.webp",
+    "prompt": "Use case: illustration-story. Create a NEW 16:9 cinematic background for the first act of a Hogwarts New Year mystery game. Use the provided Great Hall image ONLY as a rendering style, material and lighting reference. Scene: empty interior of the old Hogwarts clock tower at midnight, a grand circular stone mechanical chamber with monumental bronze clockwork, massive interlocking cogwheels, overhead timber beams, iron axles and chains. Warm amber lantern light grazes engraved aged brass; cold blue moonlight enters tall narrow Gothic windows, a hint of snowy rooftops outside. Giant clockwork arranged mostly around the left and right sides and high in the background, an uncluttered central stone dais and clearly visible lower foreground floor left open for game UI. Rich realistic painted detail, magical atmosphere, tactile metal and stone, elegant film production design, no plastic 3D. No characters, no readable clock face numbers or letters, no text, no UI, no watermark. Calm clear center for an interactive six gear overlay to be added later. Full bleed landscape 16:9.",
+    "generator": "built-in image_gen",
+    "reference": "Existing Great Hall illustration from the prologue"
+  }
+]

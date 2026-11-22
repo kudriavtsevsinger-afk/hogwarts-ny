@@ -73,7 +73,7 @@ window.PrologueScene = (() => {
   }
   function background(scene){
     const name=({wall:'wall',trolley:'wall',threshold:'wall',door:'carriage-door',boarding:'carriage-door',window:'carriage-window',steam:'carriage-window',end:'carriage-window'})[scene.visual] || scene.background || 'platform';
-    return {name,url:(scene.chapter>=3?castle:scene.chapter===2?art2:art)+name+'.webp'};
+    return {name,url:scene.backgroundUrl || (scene.chapter>=3?castle:scene.chapter===2?art2:art)+name+'.webp'};
   }
   function updateCopy(scene){
     let copy=stage.querySelector('.story-copy');
@@ -124,7 +124,7 @@ window.PrologueScene = (() => {
       stage.dataset.shot=scene.id||scene.visual;
       if(chapterChanged)stage.append(el('div','chapter-transition'));
       stage.dataset.chapter=scene.chapter||1;stage.dataset.framing=scene.framing||'medium';if(scene.darkHall)stage.classList.add('dark-hall');
-      stage.setAttribute('aria-label','Пролог · Сцена '+(scene.chapter||1));
+      stage.setAttribute('aria-label',scene.chapter===7?'Акт I · Часовая башня':'Пролог · Сцена '+(scene.chapter||1));
       const bg=background(scene).name;
       if(!['blackout','final-title'].includes(scene.visual))stage.append(img(background(scene).url,'','story-background'));
       if(scene.visual==='trolley') stage.append(img(art+'trolley.webp','Тележка с чемоданами','moving-trolley'));
@@ -180,3 +180,4 @@ window.PrologueScene = (() => {
     for(const name of ['compartment','vendor','viaduct','sweets']){const im=new Image();im.src=art2+name+'.webp';}
   }};
 })();
+
