@@ -10,7 +10,7 @@ window.GameSound=(()=>{
  function buffer(url){if(!decoded.has(url))decoded.set(url,load(url).then(b=>ctx.decodeAudioData(b.slice(0))).catch(e=>{decoded.delete(url);throw e;}));return decoded.get(url);}
  function targetVolume(){return Math.min(1,level*(voiceSource ? .25 : .95*musicBoost));}
  function volume(to){clearInterval(fade);const from=music.volume,start=performance.now();fade=setInterval(()=>{const t=Math.min(1,(performance.now()-start)/450);music.volume=Math.max(0,Math.min(1,from+(to-from)*t));if(t===1)clearInterval(fade);},25);}
- function play(){if(!unlocked||paused||!current||!level)return;music.play().then(()=>volume(targetVolume())).catch(()=>{gate.hidden=false;});}
+ function play(){if(!unlocked||paused||!current||!level)return;music.play().then(()=>{if(latest?.scene?.soundCut){music.pause();music.volume=0;return;}volume(targetVolume());}).catch(()=>{gate.hidden=false;});}
  function stopVoice(){if(voiceSource){const old=voiceSource;voiceSource=null;try{old.stop();}catch{}}}
  function stopEffects(){for(const s of effects){try{s.stop();}catch{}}effects.clear();}
  async function voice(scene){
@@ -85,7 +85,10 @@ window.GameSound=(()=>{
     sceneKey=key;stopVoice();if(!carry)stopEffects();if(state.phase==='lobby')music.currentTime=0;
     if(unlocked&&!paused)volume(targetVolume());
    }
+   // The frozen clock cuts the entire soundscape immediately, including pending fades.
+   if(state.scene?.soundCut){clearInterval(fade);clearTimeout(transition);musicJob++;music.pause();music.volume=0;stopVoice();stopEffects();return;}
    if(changed||restartMusic)reconcile();cues();
   }
  };
 })();
+

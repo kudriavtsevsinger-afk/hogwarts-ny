@@ -29,7 +29,7 @@ test('camera retains preview across polls, submits receipt only, releases camera
 });
 test('shared-screen voice and effects: no repeats, pause, ducking, cue carry and stale cancellation',async()=>{
  const started=[],sources=[],stopped=[],gains=[],contexts=[],button={},gate={querySelector:()=>button};let music;
- class Audio{constructor(){music=this;this.volume=.45;}play(){return Promise.resolve();}pause(){}}
+ class Audio{constructor(){music=this;this.volume=.45;}play(){this.paused=false;return Promise.resolve();}pause(){this.paused=true;}}
  class Context{
   constructor(){contexts.push(this);this.currentTime=0;this.destination={};}resume(){this.paused=false;return Promise.resolve();}suspend(){this.paused=true;return Promise.resolve();}decodeAudioData(){return Promise.resolve({duration:30});}
   createGain(){const gain={gain:{setValueAtTime(){},linearRampToValueAtTime(){},setTargetAtTime(){}},connect(){return this;},disconnect(){}};gains.push(gain);return gain;}
@@ -59,4 +59,11 @@ test('shared-screen voice and effects: no repeats, pause, ducking, cue carry and
  sound.sync({...montage,scene:{...montage.scene,key:'r:9',musicBoost:undefined,musicRestart:undefined}});await flush();time+=500;fades.at(-1)();assert(Math.abs(music.volume-.4275)<.001,'ordinary background level restored');
  sound.sync({...montage,audio:{enabled:false,volume:.45}});time+=500;fades.at(-1)();assert.equal(music.volume,0,'montage respects mute');
  sound.sync({...montage,audio:{enabled:true,volume:1}});await flush();time+=500;fades.at(-1)();assert.equal(music.volume,1,'boost is safely capped');
+ sound.sync({...montage,scene:{key:'r:before-stop',music:'christmas',cue:'crowd-laugh',cueDuration:2,elapsedMs:0}});await flush();const stopsBeforeCut=stopped.length;
+ const ending={run:'r',phase:'story',scene:{key:'r:ending',id:'clock-stopped',music:null,soundCut:true,elapsedMs:0}};
+ sound.sync(ending);assert.equal(music.volume,0,'clock stops music immediately without a volume ramp');assert.equal(music.paused,true);assert.equal(stopped.length,stopsBeforeCut+1,'the cut stops an active effect as well');
+ const endSources=started.length;sound.sync({...ending,paused:true});sound.sync(ending);await flush();assert.equal(music.volume,0);assert.equal(music.paused,true);assert.equal(started.length,endSources,'silence survives pause and polling');
+ sound.sync({...ending,scene:{...ending.scene,key:'r:title',id:'prologue-end'}});await flush();assert.equal(music.paused,true);assert.equal(music.volume,0);
+
 });
+
