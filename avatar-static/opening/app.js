@@ -12,6 +12,7 @@ let code = session?.code || (host ? '' : requested);
 let state, rendered, pollPending = false, busy = false, revision = 0;
 document.body.classList.toggle('host', host);
 window.GameSound.init(host);
+window.GameSound.onComplete(async key=>{if(!host||state?.scene?.key!==key)return;revision++;const next=await api('/complete',{key});revision++;accept(next);});
 let adminExpanded = false;
 const weather = document.querySelector('#weather');
 for (let i = 0; i < 38; i++) {
@@ -203,7 +204,8 @@ function render() {
   if (state.phase === 'story') {
     if(host) window.PrologueScene.render(state.scene,screen);
     else {
-      if(state.ticket) window.TicketCamera.render(state.ticket,screen,async payload=>act(async()=>accept(await api('/ticket',payload))),state.paused);
+      if(state.wish) wishChoice();
+      else if(state.ticket) window.TicketCamera.render(state.ticket,screen,async payload=>act(async()=>accept(await api('/ticket',payload))),state.paused);
       else if(state.sweetChoice) sweetChoice();
       else if(state.introduction) introductionChoice();
       else if(state.sceneEnded && state.result) personalResult();
@@ -268,6 +270,18 @@ function introductionChoice() {
   });box.append(list);
   if(state.paused)box.append(element('p','Выбор продолжится после паузы.','hint'));
 }
+const wishDrafts=new Map();
+function wishChoice(){
+ const q=state.wish;
+ if(q.value!==null){panel('Желание сохранено','Пусть оно найдёт дорогу к исполнению.');return;}
+ let box=screen.querySelector('.wish-panel');
+ if(!box||box.dataset.key!==q.key){
+  box=panel('Загадай желание','Перед наступлением Нового года загадай желание для своего персонажа.');box.classList.add('wish-panel');box.dataset.key=q.key;
+  const form=element('form'),text=element('textarea');text.maxLength=500;text.rows=5;text.placeholder='Моё желание…';text.setAttribute('aria-label','Желание персонажа');text.value=wishDrafts.get(q.key)||'';text.oninput=()=>wishDrafts.set(q.key,text.value);
+  const send=element('button','Загадать','primary-action');form.append(text,send);form.onsubmit=e=>{e.preventDefault();if(!text.value.trim())return;void act(async()=>{const next=await api('/wish',{key:q.key,text:text.value});wishDrafts.delete(q.key);accept(next);});};box.append(form);
+ }
+ box.querySelector('textarea').disabled=state.paused;box.querySelector('button').disabled=state.paused;
+}
 function sweetChoice() {
   const q=state.sweetChoice;
   if(q.choice!==null){const chosen=q.options.find(s=>s.id===q.choice);const box=panel('Сладость выбрана',chosen.name);box.append(element('p','Готово '+q.answered+' из '+q.total+'. Смотри на общий экран.','hint'));return;}
@@ -281,7 +295,8 @@ function personalResult() {
   box.classList.add('personal-result');const copy=element('div','','result-copy');
   while(box.firstChild)copy.append(box.firstChild);
   copy.append(element('p',state.result.strongest.join(' · '),'traits'));
-  copy.append(element('p','Огни замка уже близко. Продолжение следует.','hint'));
+  if(state.profile?.wish)copy.append(element('p',state.profile.wish,'saved-wish'));
+  copy.append(element('p','Полночь остановилась. Ваша история только начинается.','hint'));
   box.append(image(state.player.id,state.player.name,expression),copy);
 }
 
@@ -300,7 +315,7 @@ function adminControls() {
     }
     if (state.waiting) controls.append(element('p',state.waiting,'hint'));
     button(controls, state.paused ? 'Продолжить' : 'Пауза', async () => accept(await api(state.paused ? '/resume' : '/pause', {})), 'secondary-action');
-    if (state.sceneEnded) controls.append(element('p','Первые две сцены завершены.','hint'));
+    if (state.sceneEnded) controls.append(element('p','Пролог завершён.','hint'));
   }
   const settings = element('details'); settings.open = adminExpanded;
   settings.ontoggle = () => { adminExpanded = settings.open; };

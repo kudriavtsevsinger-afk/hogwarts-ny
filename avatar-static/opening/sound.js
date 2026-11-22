@@ -4,8 +4,9 @@ window.GameSound=(()=>{
  const gate=document.querySelector('#sound-gate');
  let unlocked=false,ctx,master,current=null,desired=null,paused=false,level=.45,latest;
  let fade,transition,musicJob=0,sceneKey,voiceSource,pendingVoice,playedVoice,pendingCue,playedCue;
+ let noteKey,doneKey,failedKey,ackPending=false,complete=async()=>{};
  const effects=new Set(),raw=new Map(),decoded=new Map();
- function load(url){if(!raw.has(url))raw.set(url,fetch(url).then(r=>{if(!r.ok)throw Error('Audio unavailable');return r.arrayBuffer();}).catch(e=>{raw.delete(url);throw e;}));return raw.get(url);}
+ function load(url){if(!raw.has(url))raw.set(url,fetch(url,globalThis.AbortSignal?.timeout?{signal:AbortSignal.timeout(8000)}:{}).then(r=>{if(!r.ok)throw Error('Audio unavailable');return r.arrayBuffer();}).catch(e=>{raw.delete(url);throw e;}));return raw.get(url);}
  function buffer(url){if(!decoded.has(url))decoded.set(url,load(url).then(b=>ctx.decodeAudioData(b.slice(0))).catch(e=>{decoded.delete(url);throw e;}));return decoded.get(url);}
  function targetVolume(){return level*(voiceSource ? .25 : .95);}
  function volume(to){clearInterval(fade);const from=music.volume,start=performance.now();fade=setInterval(()=>{const t=Math.min(1,(performance.now()-start)/450);music.volume=Math.max(0,Math.min(1,from+(to-from)*t));if(t===1)clearInterval(fade);},25);}
@@ -18,13 +19,11 @@ window.GameSound=(()=>{
   try{
    const data=await buffer(scene.voice.url);
    if(key!==sceneKey||paused||!level)return;
-   const offset=(latest.scene.elapsedMs||0)/1000;
-   if(offset>=data.duration){playedVoice=key;return;}
    const source=ctx.createBufferSource(),gain=ctx.createGain();source.buffer=data;gain.gain.value=1.4;source.connect(gain).connect(master);
    voiceSource=source;playedVoice=key;volume(targetVolume());
-   source.onended=()=>{source.disconnect();gain.disconnect();if(voiceSource===source){voiceSource=null;volume(targetVolume());}};
-   source.start(0,offset);
-  }catch{}finally{if(pendingVoice===key)pendingVoice=null;}
+   source.onended=()=>{source.disconnect();gain.disconnect();if(voiceSource===source){voiceSource=null;doneKey=key;volume(targetVolume());}};
+   source.start(0);
+  }catch{failedKey=key;}finally{if(pendingVoice===key)pendingVoice=null;}
  }
  async function effect(scene){
   if(!unlocked||paused||!level||!ctx||pendingCue===sceneKey||playedCue===sceneKey)return;
@@ -47,7 +46,19 @@ window.GameSound=(()=>{
   if(current===desired){play();return;}
   volume(0);transition=setTimeout(()=>{if(job!==musicJob)return;music.pause();current=desired;music.src='/audio/'+current+'.ogg';music.volume=0;play();},350);
  }
- function cues(){if(latest?.scene?.voice)void voice(latest.scene);if(latest?.scene?.cue)void effect(latest.scene);}
+ function cues(){
+  const scene=latest?.scene;if(!scene)return;
+  if(scene.voice && doneKey!==sceneKey && failedKey!==sceneKey)void voice(scene);
+  if(scene.cue)void effect(scene);
+  if(scene.musicBreak&&unlocked&&ctx?.createOscillator&&!paused&&level&&scene.elapsedMs>=2000&&scene.elapsedMs<3700&&noteKey!==sceneKey){
+   noteKey=sceneKey;const note=ctx.createOscillator(),gain=ctx.createGain();note.type='sine';note.frequency.setValueAtTime(523.25,ctx.currentTime);note.frequency.exponentialRampToValueAtTime(492,ctx.currentTime+1.3);gain.gain.setValueAtTime(.035,ctx.currentTime);gain.gain.linearRampToValueAtTime(0,ctx.currentTime+1.5);note.connect(gain).connect(master);effects.add(note);note.onended=()=>{effects.delete(note);note.disconnect();gain.disconnect();};note.start();note.stop(ctx.currentTime+1.5);
+  }
+  // The server holds voiced scenes until this screen has played the complete file.
+  // Text-only fallback also advances, so unavailable audio cannot deadlock a room.
+  if(scene.voice&&!paused&&!ackPending&&scene.elapsedMs>=scene.voice.durationMs+600&&(doneKey===sceneKey||!unlocked||!level||failedKey===sceneKey)){
+   const key=sceneKey;ackPending=true;Promise.resolve(complete(key)).catch(()=>{}).finally(()=>{ackPending=false;});
+  }
+ }
  gate.querySelector('button').onclick=()=>{
   ctx ||=new(window.AudioContext||window.webkitAudioContext)();
   if(!master){master=ctx.createGain();master.connect(ctx.destination);}master.gain.value=level;void ctx.resume();
@@ -55,12 +66,16 @@ window.GameSound=(()=>{
   music.play().then(()=>{unlocked=true;current=desired||'intro';gate.hidden=true;if(!desired||paused||!level)music.pause();else volume(targetVolume());if(paused)void ctx.suspend();cues();}).catch(()=>{gate.querySelector('p').textContent='Не удалось включить звук. Нажми ещё раз.';});
  };
  return {
-  init(display){gate.hidden=!display;if(display)for(let i=1;i<=13;i++)void load('/audio/voice/'+String(i).padStart(2,'0')+'.ogg').catch(()=>{});},
+  onComplete(fn){complete=fn;},
+  init(display){gate.hidden=!display;if(display)for(let i=1;i<=43;i++)void load('/audio/voice/'+String(i).padStart(2,'0')+'.ogg').catch(()=>{});},
   sync(state){
    latest=state;const track=state.phase==='story'?state.scene?.music:({crossing:'intro',credits:'intro',lineup:'intro',title:'intro'})[state.phase]||null;
    const nextLevel=state.audio?.enabled===false?0:(state.audio?.volume??.45);
-   const changed=track!==desired||Boolean(state.paused)!==paused||level!==nextLevel;
-   desired=track;paused=Boolean(state.paused);level=nextLevel;
+   const nextPaused=Boolean(state.paused);
+   const breakMusic=state.scene?.musicBreak&&state.scene.elapsedMs>=2000;
+   const nextTrack=breakMusic?null:track;
+   const changed=nextTrack!==desired||nextPaused!==paused||level!==nextLevel;
+   desired=nextTrack;paused=nextPaused;level=nextLevel;
    const key=state.scene?.key||state.run+':'+state.phase;
    if(sceneKey!==key){
     const carry=state.scene?.id==='steam-transition'&&sceneKey===state.run+':'+(Number(state.scene.key.split(':').pop())-1);

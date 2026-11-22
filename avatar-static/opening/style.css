@@ -220,3 +220,63 @@ body.host[data-phase="story"] #screen{display:block;padding:0;height:100svh;over
 @keyframes licorice-knot{0%,15%{transform:scaleX(1.5) scaleY(.15) rotate(-20deg)}55%{transform:scale(.8) rotate(25deg)}100%{transform:scale(1) rotate(0)}}
 @media(max-aspect-ratio:4/3){.passing-fields,.castle-window{display:none}.story-stage .vendor-actor{left:55%;height:82%;max-width:115vw}.seated-person{width:32vw}.sweet-effect .sweet-art{width:20vh;height:20vh}}
 @media(prefers-reduced-motion:reduce){.story-stage *{animation:none!important}.sweet-effect[data-outcome="frog"] .sweet-art{left:66%;top:48%}.golden-aura{opacity:.45}}
+
+/* Full-length film-inspired cast. Framing crops the viewport, never the source. */
+.full-body-npc{width:auto;max-width:none;aspect-ratio:1/2;background-size:300% 100%;background-repeat:no-repeat;left:68%;height:145svh;bottom:-48svh;filter:drop-shadow(0 8px 18px #0005)}
+.full-body-npc[data-npc="mcgonagall"]{aspect-ratio:2/3}
+.story-stage[data-framing="wide"] .full-body-npc{height:90svh;bottom:1svh}
+.story-stage[data-framing="close"] .full-body-npc{height:210svh;bottom:-115svh;left:64%}
+.peeves-actor{height:77svh;bottom:15svh;left:65%;animation:poltergeist-float 3s ease-in-out infinite alternate;filter:drop-shadow(0 0 14px #88cfff55)}
+.story-stage[data-visual="peeves-exit"] .peeves-actor{animation:poltergeist-exit 2.6s both}
+.story-stage[data-chapter="3"] .story-background,.story-stage[data-visual="hall-flight"] .story-background{animation:castle-flight 7s ease-out both}
+.story-stage[data-visual="castle-walk"] .lineup{animation:castle-walk 5.5s ease-in both}
+.story-stage[data-visual="great-doors"] .story-background{transform-origin:80% 50%;animation:enter-great-hall 3.2s both}
+.story-stage[data-visual="feast-montage"] .story-background{animation:feast-drift 6s linear both}
+.story-stage[data-visual="portrait-montage"] .story-background{transform-origin:10% 40%;animation:portrait-drift 3.5s both}
+.story-stage[data-visual="portrait-montage"] .peeves-actor{left:30%;height:60svh}
+.confetti,.enchanted-snow{position:absolute;inset:0;z-index:3;overflow:hidden;pointer-events:none}
+.confetti i,.enchanted-snow i{position:absolute;left:var(--x);top:-5%;width:7px;height:10px;background:hsl(calc(var(--i)*47) 75% 65%);animation:enchanted-fall 6s linear infinite;animation-delay:calc(var(--i)*-.3s)}
+.enchanted-snow{z-index:0;mask-image:linear-gradient(#000 60%,transparent 90%)}.enchanted-snow i{border-radius:50%;width:3px;height:3px;background:#d9eaffb0;box-shadow:0 0 5px #c3e9ff}
+.magic-star{position:absolute;right:11%;top:4%;width:13svh;height:13svh;z-index:4;background:#ffe6a4;clip-path:polygon(50% 0,59% 34%,85% 15%,66% 42%,100% 50%,66% 58%,85% 85%,59% 66%,50% 100%,41% 66%,15% 85%,34% 58%,0 50%,34% 42%,15% 15%,41% 34%);filter:drop-shadow(0 0 20px gold);animation:star-bloom 4s both}
+.wish-spark{position:absolute;top:36%;width:18px;height:18px;background:#fff3c5;border-radius:50%;box-shadow:0 0 15px 8px #ffc75a,0 0 55px 20px #e8b44788;z-index:5;animation:wish-spark 1.6s both}
+.midnight-clock{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);width:min(65svh,75vw);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#303242,#101822);border:12px ridge #c7a660;box-shadow:0 0 0 6px #261c13,0 20px 80px #0009;z-index:4}
+.clock-number{position:absolute;inset:6%;text-align:center;transform:rotate(var(--angle));font-family:Georgia,serif;color:#ebd195;font-size:clamp(18px,3.5svh,45px)}
+.hour-hand,.minute-hand{position:absolute;left:calc(50% - 3px);bottom:50%;width:6px;border-radius:4px;background:#eed79b;transform-origin:50% 100%}.hour-hand{height:25%;transform:rotate(359deg)}.minute-hand{height:38%;transform:rotate(354deg)}
+.story-stage[data-visual="clock"] .minute-hand{animation:clock-last-minute 4.5s linear both}.clock-pin{position:absolute;left:calc(50% - 9px);top:calc(50% - 9px);width:18px;height:18px;border-radius:50%;background:#fff0b0}
+.story-stage[data-visual="clock"] .story-background,.story-stage[data-visual="clock-stopped"] .story-background{filter:brightness(.45) blur(3px)}
+.story-stage[data-visual="stars-fading"] .story-background{animation:stars-go-dark 3.5s both}.dark-hall .story-background{filter:brightness(.28) saturate(.4)}
+.story-stage[data-visual="star-trembles"] .story-background{filter:brightness(.28);transform:scale(1.4);transform-origin:85% 20%}
+.story-stage[data-visual="star-trembles"] .magic-star{animation:star-falter 3.2s both}
+.magic-veil{position:absolute;inset:0;pointer-events:none;z-index:5;background:linear-gradient(#03040d,transparent);animation:copy-reveal 3.5s both}
+.story-stage[data-visual="final-flash"] .magic-veil{background:#fff3d2;animation:single-flash 1.2s both}
+.story-stage[data-visual="blackout"]{background:#000}.story-stage[data-visual="final-title"]{background:radial-gradient(ellipse,#172333,#02050a 72%)}
+.final-logo{position:absolute;left:8%;top:20%;width:84%;height:60%;overflow:hidden;animation:final-logo-in 3s ease-out both}.final-logo img{position:absolute;width:100%;height:auto;top:50%;transform:translateY(-50%)}
+.wish-panel textarea{display:block;width:100%;box-sizing:border-box;border:1px solid #c2a46880;border-radius:12px;background:#0c1521;color:#fff2dc;padding:18px;font:inherit;line-height:1.6;resize:vertical;margin:18px 0}.wish-panel button{width:100%}.saved-wish{font-style:italic;line-height:1.5;color:#ebd5a4;overflow-wrap:anywhere}
+.seated-person .seated-sweet{position:absolute;width:12svh;height:12svh;left:45%;top:42%;opacity:0;animation:seated-taste 3.2s both;animation-delay:var(--reaction-delay);filter:drop-shadow(0 3px 5px #0005)}
+.seated-person[data-outcome="pumpkin"] img{animation:seated-gold 3.2s both;animation-delay:var(--reaction-delay)}
+.seated-person[data-outcome="frog"] .seated-sweet{animation-name:seated-frog}
+.seated-person[data-outcome="wool"] img{animation:seated-wince 3.2s both;animation-delay:var(--reaction-delay)}
+@keyframes poltergeist-float{from{transform:translate(-50%,0) rotate(-2deg)}to{transform:translate(-50%,-2vh) rotate(2deg)}}
+@keyframes poltergeist-exit{to{transform:translate(-50%,-80vh) rotate(-15deg);opacity:0}}
+@keyframes castle-flight{from{transform:scale(1.08) translateY(1%)}to{transform:scale(1.01) translateY(0)}}
+@keyframes castle-walk{to{transform:translateX(-30%) scale(.65);opacity:0}}
+@keyframes enter-great-hall{0%{filter:brightness(1);transform:scale(1)}100%{filter:brightness(2);transform:scale(1.25)}}
+@keyframes feast-drift{to{transform:scale(1.06) translateX(-1%)}}
+@keyframes portrait-drift{to{transform:scale(1.18)}}
+@keyframes enchanted-fall{to{transform:translate(40px,100vh) rotate(360deg);opacity:0}}
+@keyframes star-bloom{0%{opacity:0;transform:scale(.1) rotate(-45deg)}50%,100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes wish-spark{0%{opacity:0;transform:scale(.1)}40%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-60px) scale(.2)}}
+@keyframes clock-last-minute{from{transform:rotate(348deg)}to{transform:rotate(354deg)}}
+@keyframes stars-go-dark{to{filter:brightness(.28) saturate(.4)}}
+@keyframes star-falter{0%{opacity:1}45%{opacity:.3;transform:scale(.95)}70%{opacity:.7}100%{opacity:.12;transform:scale(.8)}}
+@keyframes single-flash{0%{opacity:0}15%{opacity:1}45%,100%{background:#000;opacity:1}}
+@keyframes final-logo-in{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes seated-taste{0%{opacity:0;transform:translateY(15px) scale(.6)}25%,65%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-10px) scale(.8)}}
+@keyframes seated-frog{0%{opacity:0;transform:translate(0,20px)}25%{opacity:1;transform:translate(5px,-55px) rotate(-12deg)}65%{opacity:1;transform:translate(30px,-5px)}100%{opacity:0;transform:translate(30px,-5px)}}
+@keyframes seated-gold{35%,65%{filter:drop-shadow(0 0 30px #ffd27b) brightness(1.2)}}
+@keyframes seated-wince{35%{transform:rotate(-2deg)}65%{transform:rotate(2deg)}}
+@media(prefers-reduced-motion:reduce){.story-stage *{animation:none!important}.seated-person .seated-sweet{opacity:1}.magic-veil{display:none}.story-stage[data-visual="final-flash"]{background:#000}.story-stage[data-visual="final-flash"]>*{display:none}}
+
+.clock-time{position:absolute;bottom:17%;left:0;right:0;text-align:center;color:#e2c480;font:clamp(18px,3svh,32px) Georgia,serif;letter-spacing:.14em}
+
+.final-logo{z-index:3}

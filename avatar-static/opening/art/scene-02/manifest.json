@@ -14,11 +14,12 @@
     "vendor": {
       "url": "/art/scene-02/vendor.webp",
       "size": [
-        1312,
-        1199
+        1086,
+        1448
       ],
       "transparent": true,
-      "prompt": "Hand-painted smiling elderly silver-haired confectionery seller in plum Victorian dress and cream apron, beside brass sweets trolley; entire character and trolley; transparent background."
+      "prompt": "Full-body painterly trolley witch based on film reference: matching face, curled grey hair, plum vest and patterned blouse, skirt and shoes, sweets trolley, transparent background.",
+      "reference": "https://br.web.img2.acsta.net/img/69/43/6943f0e5e316679405272ed90f9c5861.jpg"
     },
     "viaduct": {
       "url": "/art/scene-02/viaduct.webp",

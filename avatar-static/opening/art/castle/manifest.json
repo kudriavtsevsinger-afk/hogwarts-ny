@@ -1,0 +1,100 @@
+{
+  "status": "integrated",
+  "images": {
+    "great-hall": {
+      "url": "/art/castle/great-hall.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
+    },
+    "vestibule": {
+      "url": "/art/castle/vestibule.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
+    },
+    "peeves": {
+      "url": "/art/castle/peeves.webp",
+      "size": [
+        1024,
+        1536
+      ],
+      "transparent": true,
+      "frames": 1
+    },
+    "lake": {
+      "url": "/art/castle/lake.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
+    },
+    "dumbledore": {
+      "url": "/art/castle/dumbledore.webp",
+      "size": [
+        1536,
+        1024
+      ],
+      "transparent": true,
+      "frames": 3
+    },
+    "hagrid": {
+      "url": "/art/castle/hagrid.webp",
+      "size": [
+        1536,
+        1024
+      ],
+      "transparent": true,
+      "frames": 3
+    },
+    "mcgonagall": {
+      "url": "/art/castle/mcgonagall.webp",
+      "size": [
+        1774,
+        887
+      ],
+      "transparent": true,
+      "frames": 3
+    }
+  },
+  "emotions": {
+    "mcgonagall": [
+      "stern",
+      "warm",
+      "concerned"
+    ],
+    "hagrid": [
+      "happy",
+      "embarrassed",
+      "attentive"
+    ],
+    "dumbledore": [
+      "warm",
+      "amused",
+      "concerned"
+    ]
+  },
+  "framing": "Complete full-body figures in transparent atlases; CSS chooses expression and shot scale without altering source images.",
+  "generation": "Built-in image generation; full-body painterly storybook game sprites and cinematic backgrounds.",
+  "references": {
+    "mcgonagall": "https://media.snl.no/media/171913/standard_maggie-smith-harry-potter.jpg",
+    "hagrid": "https://img.cinematoday.jp/a/LzAA28y0WSVW/_size_640x/_v_1666576381/main.jpg",
+    "dumbledore": "https://imgr.cineserie.com/2023/09/michael-gambon-dumbledore-est-mort.jpeg",
+    "peeves": "User-supplied ghost reference, image(1).png"
+  },
+  "prompts": {
+    "cast": "Preserve recognizable face and movie costume from reference. Three full-length figures in equal columns: distinct expressions. Head and feet fully visible, true transparency, painterly 2D style.",
+    "lake": "Snowy Hogwarts above a dark lake at night, golden windows, snowy footpath and entrance gates, clear foreground for characters.",
+    "vestibule": "Gothic vestibule, grand stairs, portraits, torches, oak doors, enchanted snow; clear foreground.",
+    "great-hall": "Festive Hogwarts Great Hall, floating candles, star ceiling, garlands, enormous tree crowned by gold star, guests in distance, open foreground.",
+    "peeves": "Full-body silver translucent ghost based on supplied reference: preserve face, hair and period costume, playful smile, painterly 2D, transparent background."
+  }
+}
