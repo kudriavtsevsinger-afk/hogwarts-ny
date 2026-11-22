@@ -104,6 +104,51 @@
       ],
       "transparent": false,
       "frames": 1
+    },
+    "feast-desserts": {
+      "url": "/art/castle/feast-desserts.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
+    },
+    "feast-ornaments": {
+      "url": "/art/castle/feast-ornaments.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
+    },
+    "feast-flames": {
+      "url": "/art/castle/feast-flames.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
+    },
+    "feast-goblets": {
+      "url": "/art/castle/feast-goblets.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
+    },
+    "feast-exterior": {
+      "url": "/art/castle/feast-exterior.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "transparent": false,
+      "frames": 1
     }
   },
   "emotions": {
@@ -138,6 +183,7 @@
     "great-hall": "Festive Hogwarts Great Hall, floating candles, star ceiling, garlands, enormous tree crowned by gold star, guests in distance, open foreground.",
     "peeves": "Full-body silver translucent ghost based on supplied reference: preserve face, hair and period costume, playful smile, painterly 2D, transparent background.",
     "clock": "Illustrated gothic bronze and gold Hogwarts clock, celestial blue dial without hands or numbers, transparent. Numerals and animated hands are separate DOM overlays.",
-    "feast": "Warm illustrated Great Hall dinner closeups: abundant table, happy fictional adult guests sharing cakes, candles and Christmas tree. Same style and palette as great-hall reference, 16:9, no text."
+    "feast": "Warm illustrated Great Hall dinner closeups: abundant table, happy fictional adult guests sharing cakes, candles and Christmas tree. Same style and palette as great-hall reference, 16:9, no text.",
+    "feast-details": "Extreme close-ups in the same painterly style: berry pastries, golden owl Christmas ornament, candle flames, carved goblets. Exterior: snowy Hogwarts from an elevated viewpoint for a slow camera pan."
   }
 }

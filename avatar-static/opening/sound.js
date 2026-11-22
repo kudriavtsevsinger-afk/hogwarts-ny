@@ -2,13 +2,13 @@
 window.GameSound=(()=>{
  const music=new Audio();music.loop=true;music.preload='none';
  const gate=document.querySelector('#sound-gate');
- let unlocked=false,ctx,master,current=null,desired=null,paused=false,level=.45,latest;
+ let unlocked=false,ctx,master,current=null,desired=null,paused=false,level=.45,musicBoost=1,latest;
  let fade,transition,musicJob=0,sceneKey,voiceSource,pendingVoice,playedVoice,pendingCue,playedCue;
  let noteKey,doneKey,failedKey,ackPending=false,complete=async()=>{};
  const effects=new Set(),raw=new Map(),decoded=new Map();
  function load(url){if(!raw.has(url))raw.set(url,fetch(url,globalThis.AbortSignal?.timeout?{signal:AbortSignal.timeout(8000)}:{}).then(r=>{if(!r.ok)throw Error('Audio unavailable');return r.arrayBuffer();}).catch(e=>{raw.delete(url);throw e;}));return raw.get(url);}
  function buffer(url){if(!decoded.has(url))decoded.set(url,load(url).then(b=>ctx.decodeAudioData(b.slice(0))).catch(e=>{decoded.delete(url);throw e;}));return decoded.get(url);}
- function targetVolume(){return level*(voiceSource ? .25 : .95);}
+ function targetVolume(){return Math.min(1,level*(voiceSource ? .25 : .95*musicBoost));}
  function volume(to){clearInterval(fade);const from=music.volume,start=performance.now();fade=setInterval(()=>{const t=Math.min(1,(performance.now()-start)/450);music.volume=Math.max(0,Math.min(1,from+(to-from)*t));if(t===1)clearInterval(fade);},25);}
  function play(){if(!unlocked||paused||!current||!level)return;music.play().then(()=>volume(targetVolume())).catch(()=>{gate.hidden=false;});}
  function stopVoice(){if(voiceSource){const old=voiceSource;voiceSource=null;try{old.stop();}catch{}}}
@@ -74,8 +74,9 @@ window.GameSound=(()=>{
    const nextPaused=Boolean(state.paused);
    const breakMusic=state.scene?.musicBreak&&state.scene.elapsedMs>=2000;
    const nextTrack=breakMusic?null:track;
-   const changed=nextTrack!==desired||nextPaused!==paused||level!==nextLevel;
-   desired=nextTrack;paused=nextPaused;level=nextLevel;
+   const nextBoost=state.phase==='story'&&state.scene?.musicBoost===1.6?1.6:1;
+   const changed=nextTrack!==desired||nextPaused!==paused||level!==nextLevel||musicBoost!==nextBoost;
+   desired=nextTrack;paused=nextPaused;level=nextLevel;musicBoost=nextBoost;
    const key=state.scene?.key||state.run+':'+state.phase;
    if(sceneKey!==key){
     const carry=state.scene?.id==='steam-transition'&&sceneKey===state.run+':'+(Number(state.scene.key.split(':').pop())-1);

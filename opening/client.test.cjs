@@ -50,4 +50,10 @@ test('shared-screen voice and effects: no repeats, pause, ducking, cue carry and
  sound.sync({...state,scene:{id:'steam-transition',key:'r:4',music:'calm',elapsedMs:0}});assert.equal(stopped.length,0,'wheels carry through steam');
  sound.sync({...state,scene:{id:'compartment-reveal',key:'r:5',music:'calm',elapsedMs:0}});assert.equal(stopped.length,1);
  sound.sync({...state,scene:{...state.scene,key:'r:6',elapsedMs:0}});sound.sync({phase:'lobby',run:'reset'});await flush();assert.equal(started.length,2,'cancel late voice load on restart');
+ const montage={run:'r',phase:'story',scene:{key:'r:7',music:'christmas',musicBoost:1.6,elapsedMs:0}};
+ sound.sync(montage);await flush();time+=500;fades.at(-1)();assert(Math.abs(music.volume-.684)<.001,'montage lifts music by 60 percent');
+ music.currentTime=42;sound.sync({...montage,scene:{...montage.scene,key:'r:8'}});await flush();assert.equal(music.currentTime,42,'same montage track continues across cuts');
+ sound.sync({...montage,scene:{...montage.scene,key:'r:9',musicBoost:undefined}});await flush();time+=500;fades.at(-1)();assert(Math.abs(music.volume-.4275)<.001,'ordinary background level restored');
+ sound.sync({...montage,audio:{enabled:false,volume:.45}});time+=500;fades.at(-1)();assert.equal(music.volume,0,'montage respects mute');
+ sound.sync({...montage,audio:{enabled:true,volume:1}});await flush();time+=500;fades.at(-1)();assert.equal(music.volume,1,'boost is safely capped');
 });

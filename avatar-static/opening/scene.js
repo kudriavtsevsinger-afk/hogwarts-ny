@@ -170,7 +170,7 @@ window.PrologueScene = (() => {
   return {render,sync,preload(){
     if(preloaded)return;preloaded=true;
     for(const name of ['wall','platform','trolley','conductor','caretaker','carriage-door','carriage-window']){const im=new Image();im.src=art+name+'.webp';}
-    for(const name of ['lake','vestibule','great-hall','mcgonagall','hagrid','dumbledore','peeves','clock','feast-table','feast-guests','feast-candles']){const im=new Image();im.src=castle+name+'.webp';}
+    for(const name of ['lake','vestibule','great-hall','mcgonagall','hagrid','dumbledore','peeves','clock','feast-table','feast-guests','feast-candles','feast-desserts','feast-goblets','feast-ornaments','feast-flames','feast-exterior']){const im=new Image();im.src=castle+name+'.webp';}
     for(const id of ['oleg','vanya','sima','amina','masha','liza']){const im=new Image();im.src='/art/players/'+id+'.webp';}
     for(const name of ['compartment','vendor','viaduct','sweets']){const im=new Image();im.src=art2+name+'.webp';}
   }};

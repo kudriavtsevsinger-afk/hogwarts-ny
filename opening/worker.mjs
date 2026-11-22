@@ -1,6 +1,7 @@
 import { questions, score } from './quiz.mjs';
 import { introductions, storyPosition } from './scene01.mjs';
 import { sweets } from './scene02.mjs';
+import { createBank, bankView } from './economy.mjs';
 
 const cast = { oleg: 'Олег', sima: 'Сима', masha: 'Маша', vanya: 'Ваня', liza: 'Лиза', amina: 'Амина' };
 const CARD_MS = 2600;
@@ -57,6 +58,7 @@ function view(room, auth) {
     })),
     player: player ? { id: player.id, name: cast[player.id], next: player.answers.length } : null
   };
+  if(host || player)state.bank=bankView(room.bank || createBank());
   if (current === 'lobby' && player) state.question = questions[player.answers.length] ?? null;
   if (current === 'credits' && host) {
     const index = Math.floor(((room.pausedAt ?? now) - room.revealAt) / CARD_MS);
@@ -132,14 +134,15 @@ export class OpeningRoom {
       if (action === 'create' && method === 'POST') {
         return await this.storage.transaction(async txn => {
           if (await txn.get('room')) fail('Этот код занят.');
-          const room = { host: token(), players: new Map(), phase: 'lobby' };
+          const room = { host: token(), players: new Map(), phase: 'lobby',bank:createBank() };
           await txn.put('room', room);
           return json({ token: room.host }, 201);
         });
       }
       if (method === 'GET') {
-        const room = await this.storage.get('room');
+        let room = await this.storage.get('room');
         if (!room) fail('Комната не найдена. Проверь код.', 404);
+        if(!room.bank)room=await this.storage.transaction(async txn=>{const latest=await txn.get('room');if(!latest.bank){latest.bank=createBank();await txn.put('room',latest);}return latest;});
         if (action === 'state') return json(view(room, auth));
         fail('Страница не найдена.', 404);
       }
@@ -154,6 +157,7 @@ export class OpeningRoom {
   }
 }
 async function applyAction(txn, room, action, auth, input) {
+  room.bank ||= createBank();
   const advance=(pos)=>{room.phase='story';room.storyIndex=pos.index+1;room.storyStartedAt=Date.now();};
   const advanceWhenReady=(pos,responses)=>{if(room.lineup.every(id=>Object.hasOwn(responses,id)))advance(pos);};
   if(action==='complete') {
@@ -229,6 +233,7 @@ async function applyAction(txn, room, action, auth, input) {
     if (room.storyStartedAt != null) room.storyStartedAt += Date.now() - room.pausedAt;
     delete room.pausedAt;
   } else if (action === 'restart') {
+    room.bank=createBank();
     room.phase = 'lobby';
     delete room.revealAt; delete room.lineup; delete room.pausedAt;
     delete room.storyIndex; delete room.storyStartedAt; delete room.introductions; delete room.tickets; delete room.sweets; delete room.wishes;

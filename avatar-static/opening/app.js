@@ -87,6 +87,11 @@ async function create() {
 }
 function accept(next) {
   state = next;
+  let bank=document.querySelector('#team-bank');
+  if(!bank){bank=element('aside','','team-bank');bank.id='team-bank';bank.setAttribute('role','status');bank.setAttribute('aria-live','polite');bank.setAttribute('aria-atomic','true');const icon=element('span','✦','bank-coin');icon.setAttribute('aria-hidden','true');bank.append(icon,element('span','Общий банк','bank-label'),element('strong','','bank-amount'));document.body.append(bank);}
+  bank.hidden=!state.bank;
+  document.body.classList.toggle('has-bank',Boolean(state.bank));
+  if(state.bank){const amount=String(state.bank.balance);if(bank.querySelector('.bank-amount').textContent!==amount)bank.querySelector('.bank-amount').textContent=amount;bank.setAttribute('aria-label','Общий банк: '+amount+' монет');bank.title='Монеты команды на подсказки';}
   if (host) window.GameSound.sync(state);
   document.querySelector('#pause-label').hidden = !state.paused;
   document.body.classList.toggle('is-paused', host && Boolean(state.paused));
@@ -99,6 +104,7 @@ function accept(next) {
   if(host && state.scene) window.PrologueScene.sync(state.scene,state.paused);
 }
 function entry() {
+  const bank=document.querySelector('#team-bank');if(bank)bank.hidden=true;
   window.TicketCamera.close();
   if (host) {
     const box = panel('Собираем историю', 'Подготавливаем общий экран…');
