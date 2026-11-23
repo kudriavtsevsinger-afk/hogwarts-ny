@@ -42,7 +42,7 @@ for(let count=1;count<=6;count++)test(`${count} players: complete automatic prol
    if(action==='wish')assert(!JSON.stringify(await state()).includes('Моё личное желание'));
   }
  }
- assert.deepEqual(seen,sceneSequence(ids,cast).map(s=>s.id));assert.deepEqual(spoken,[...Array.from({length:40},(_,i)=>i+1),43]);assert.equal((await state()).scene.id,'prologue-end');
+ assert.deepEqual(seen,sceneSequence(ids,cast).map(s=>s.id));assert.deepEqual(spoken,Array.from({length:43},(_,i)=>i+1));assert.equal((await state()).scene.id,'prologue-end');
  for(const id of ids){const p=await state(id);assert.equal(p.profile.wish,'Моё личное желание '+id);assert(p.sceneEnded);}
  const oldRun=room.run;await call('restart','oleg',{});assert.notEqual(room.run,oldRun);assert.equal(room.wishes,undefined);assert.equal((await state('oleg')).player.next,0);
  }finally{Date.now=clock;}
@@ -64,11 +64,10 @@ test('only direct speech in captions, full audio mapping and all sweets outcomes
 });
 
 
-test('finale holds the last line, freezes at 23:59, cuts sound and ends on the title',()=>{
+test('finale follows voices 40, clock, 41, 42, 43, then darkness and title',()=>{
  const end=sceneSequence(Object.keys(cast),cast).filter(s=>s.chapter===6);
- assert.deepEqual(end.map(s=>s.id),['feast-return','voice-40','voice-43','clock-ticking','clock-stopped','final-dark','prologue-end']);
- assert.equal(end[2].actor,'dumbledore');assert.equal(end[2].expression,'concerned');assert.equal(end[2].voice.url,'/audio/voice/43.ogg');
- assert.equal(end[3].durationMs,4400);
- for(const s of end.slice(4)){assert.equal(s.music,null);assert.equal(s.soundCut,true);assert(!s.cue&&!s.musicBreak&&!s.darkHall);}
- assert.equal(end.at(-1).visual,'final-title');assert.equal(end.at(-1).end,true);
+ assert.deepEqual(end.map(s=>s.id),['feast-return','voice-40','clock-ticking','clock-stopped','voice-41','voice-42','voice-43','final-dark','prologue-end']);
+ assert.equal(end[2].durationMs,4400);assert.equal(end[3].cue,'bell');assert.equal(end[3].soundCut,true);
+ assert.equal(end[4].voice.url,'/audio/voice/41.ogg');assert.equal(end[5].actor,'mcgonagall');assert.equal(end[6].voice.url,'/audio/voice/43.ogg');
+ for(const s of end.slice(3))assert.equal(s.music,null);assert.equal(end.at(-1).end,true);
 });

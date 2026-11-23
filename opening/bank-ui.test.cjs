@@ -11,7 +11,7 @@ class Node{
 test('team bank is a single persistent overlay on display and phones, including zero',()=>{
  for(const phone of [false,true]){
   const body=new Node('body');for(const id of ['screen','error','weather','pause-label']){const n=new Node('div');n.id=id;body.append(n);}
-  const context=vm.createContext({document:{body,querySelector:q=>body.querySelector(q),createElement:t=>new Node(t)},window:{GameSound:{init(){},onComplete(){},sync(){}},PrologueScene:{render(){},sync(){}},TicketCamera:{close(){}}},location:{search:phone?'?room=123456':'',origin:'https://game.local'},URLSearchParams,sessionStorage:{getItem(){},setItem(){}},localStorage:{getItem(){},setItem(){}}});
+  const context=vm.createContext({setTimeout(){},clearTimeout(){},document:{body,querySelector:q=>body.querySelector(q),createElement:t=>new Node(t)},window:{GameSound:{init(){},onComplete(){},sync(){}},PrologueScene:{render(){},sync(){}},TicketCamera:{close(){}}},location:{search:phone?'?room=123456':'',origin:'https://game.local'},URLSearchParams,sessionStorage:{getItem(){},setItem(){}},localStorage:{getItem(){},setItem(){}}});
   const code=fs.readFileSync(new URL('../avatar-static/opening/app.js','file://'+__filename),'utf8').split("window.addEventListener('pageshow'")[0];vm.runInContext(code,context);vm.runInContext('render=()=>{}',context);
   const accept=state=>{context.next=state;vm.runInContext('accept(next)',context);};
   const cast=[{id:'oleg',name:'Олег'},{id:'sima',name:'Сима'}];const base={phase:'story',scene:{key:'r:1',cast},bank:{balance:30},player:{id:'sima'},isAdmin:false};accept(base);const hud=body.querySelector('#team-bank');assert(hud);assert.equal(hud.querySelector('.bank-amount').textContent,'30');assert.equal(hud.hidden,false);

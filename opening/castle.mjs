@@ -49,9 +49,11 @@ export function castleScenes(ids,cast,wishes={}){
  shot('feast-exterior',5,'feast-exterior','feast-flight',5000,{musicBoost:1.6,outdoor:true}),
  shot('feast-return',6,'great-hall','hall-flight',3000),
  line(40,'dumbledore','Друзья мои! Полагаю, настало время взглянуть на часы. До полуночи осталось…','smile'),
- line(43,'dumbledore','Боюсь, сегодня у полуночи появились собственные планы.','concerned'),
  shot('clock-ticking',6,'great-hall','clock',4400,{clock:true}),
- shot('clock-stopped',6,'great-hall','clock-stopped',2000,{clock:true,music:null,soundCut:true}),
+ shot('clock-stopped',6,'great-hall','clock-stopped',2000,{clock:true,music:null,soundCut:true,cue:'bell',cueDuration:1.8}),
+ line(41,'dumbledore','Как любопытно…','concerned',{music:null}),
+ line(42,'mcgonagall','Альбус?','neutral',{music:null}),
+ line(43,'dumbledore','Боюсь, сегодня у полуночи появились собственные планы.','concerned',{music:null}),
  shot('final-dark',6,'great-hall','blackout',1800,{music:null,soundCut:true}),
  {id:'prologue-end',chapter:6,visual:'final-title',end:true,music:null,soundCut:true}
  ].map(s=>({music:s.chapter===3?'ceremony':s.chapter>=5?'christmas':'calm',...s}));

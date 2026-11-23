@@ -67,3 +67,11 @@ test('shared-screen voice and effects: no repeats, pause, ducking, cue carry and
 
 });
 
+
+test('phone notifications expire, dismiss and do not extend indefinitely on repeated polling errors',()=>{
+ let now=0,callback;const box={hidden:true,textContent:'',setAttribute(){}};
+ const c=vm.createContext({errorBox:box,window:{},Date:{now:()=>now},setTimeout(fn){callback=fn;return 1;},clearTimeout(){callback=null;}});
+ const code=source('app.js');vm.runInContext(code.slice(code.indexOf('let noticeTimer'),code.indexOf('async function api')),c);
+ c.window.GameNotice.show('Сеть недоступна');assert.equal(box.hidden,false);const first=callback;now=1000;c.window.GameNotice.show('Сеть недоступна');assert.equal(callback,first);now=4500;callback();assert.equal(box.hidden,true);assert.equal(box.textContent,'');now=5000;c.window.GameNotice.show('Сеть недоступна');assert.equal(box.hidden,true);
+ c.window.GameNotice.show('Другой ответ');assert.equal(box.hidden,false);box.onclick();assert.equal(box.hidden,true);assert.equal(callback,null);
+});
