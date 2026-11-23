@@ -4,7 +4,7 @@ window.GameSound=(()=>{
  const gate=document.querySelector('#sound-gate');
  let unlocked=false,ctx,master,current=null,desired=null,paused=false,level=.45,musicBoost=1,latest;
  let fade,transition,musicJob=0,sceneKey,voiceSource,pendingVoice,playedVoice,pendingCue,playedCue;
- let playedEvent,pendingEvent;
+ let playedEvent,pendingEvent,lastTone;
  let noteKey,doneKey,failedKey,ackPending=false,complete=async()=>{};
  const effects=new Set(),raw=new Map(),decoded=new Map();
  function load(url){if(!raw.has(url))raw.set(url,fetch(url,globalThis.AbortSignal?.timeout?{signal:AbortSignal.timeout(8000)}:{}).then(r=>{if(!r.ok)throw Error('Audio unavailable');return r.arrayBuffer();}).catch(e=>{raw.delete(url);throw e;}));return raw.get(url);}
@@ -74,6 +74,11 @@ window.GameSound=(()=>{
   music.play().then(()=>{unlocked=true;current=desired||'intro';gate.hidden=true;if(!desired||paused||!level)music.pause();else volume(targetVolume());if(paused)void ctx.suspend();cues();}).catch(()=>{gate.querySelector('p').textContent='Не удалось включить звук. Нажми ещё раз.';});
  };
  return {
+  chime(index,key){
+   if(!unlocked||paused||!level||!ctx?.createOscillator||lastTone===key)return;lastTone=key;
+   const frequency=[261.63,329.63,392,440,523.25,659.25][index];if(!frequency)return;
+   const tone=ctx.createOscillator(),gain=ctx.createGain(),t=ctx.currentTime;tone.type='sine';tone.frequency.setValueAtTime(frequency,t);gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(.24,t+.025);gain.gain.exponentialRampToValueAtTime(.001,t+.65);tone.connect(gain).connect(master);effects.add(tone);tone.onended=()=>{effects.delete(tone);tone.disconnect();gain.disconnect();};tone.start(t);tone.stop(t+.7);
+  },
   onComplete(fn){complete=fn;},
   init(display){gate.hidden=!display;if(display)for(let i=1;i<=43;i++)void load('/audio/voice/'+String(i).padStart(2,'0')+'.ogg').catch(()=>{});},
   sync(state){
@@ -94,7 +99,7 @@ window.GameSound=(()=>{
     if(unlocked&&!paused)volume(targetVolume());
    }
    // The frozen clock cuts the entire soundscape immediately, including pending fades.
-   if(state.scene?.soundCut){clearInterval(fade);clearTimeout(transition);musicJob++;music.pause();music.volume=0;stopVoice();stopEffects();return;}
+   if(state.scene?.soundCut){clearInterval(fade);clearTimeout(transition);musicJob++;music.pause();music.volume=0;stopVoice();if(state.scene.cue)void effect(state.scene);else stopEffects();return;}
    if(changed||restartMusic)reconcile();cues();void liveEvent(state.soundEvent);
   }
  };

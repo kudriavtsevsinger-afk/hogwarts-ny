@@ -22,7 +22,14 @@ for (let i = 0; i < 38; i++) {
 }
 function save() { storage.setItem(storageKey, JSON.stringify(session)); }
 if (session) save();
-function error(message) { errorBox.hidden = !message; errorBox.textContent = message || ''; }
+let noticeTimer,noticeText='',noticeAt=0;
+function error(message) {
+ if(message&&message===noticeText&&Date.now()-noticeAt<8000)return;
+ clearTimeout(noticeTimer);errorBox.hidden=!message;errorBox.textContent=message?message+'  ×':'';
+ if(message){noticeText=message;noticeAt=Date.now();noticeTimer=setTimeout(()=>{errorBox.hidden=true;errorBox.textContent='';},4500);}
+}
+errorBox.onclick=()=>error();errorBox.setAttribute('role','status');errorBox.setAttribute('aria-live','polite');
+window.GameNotice={show:error};
 async function api(action = '', payload, roomCode = code) {
   const response = await fetch(action === 'create' ? basePath : basePath + '/' + roomCode + action, {
     method: payload === undefined ? 'GET' : 'POST',
@@ -86,6 +93,7 @@ async function create() {
   accept(await api());
 }
 function accept(next) {
+  if(state&&(state.phase!==next.phase||state.act?.key!==next.act?.key))error();
   state = next;
   if(state.phase!=='act1')window.ActOne?.hide?.();
   let bank=document.querySelector('#team-bank');
@@ -381,6 +389,6 @@ async function poll() {
 window.addEventListener('pageshow',()=>{rendered=undefined;void poll();});
 entry();
 void poll();
-setInterval(()=>{if(state?.act?.kind==='hunt'||state?.act?.kind==='gears')void poll();},200);
-setInterval(()=>{if(!['hunt','gears'].includes(state?.act?.kind))void poll();},400);
+setInterval(()=>{if(state?.act?.kind==='hunt'||state?.act?.kind==='chimes')void poll();},200);
+setInterval(()=>{if(!['hunt','chimes'].includes(state?.act?.kind))void poll();},400);
 

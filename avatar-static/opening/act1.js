@@ -1,7 +1,7 @@
 /* Shared Act I interface. The server owns all answers, purchases and timers. */
 window.ActOne=(()=>{
- let current,root,signature,hostMode,send,player,receivedAt=0,pending=false,selected=0,lastFeedback,pouch,pouchKey,pouchSelected=null;
- const drafts=new Map();
+ let current,root,signature,hostMode,send,player,receivedAt=0,pending=false,selected=0,lastFeedback,pouch,pouchKey,pouchSelected=null,lastStage=null;
+ const drafts=new Map(),localHits=new Set();
  const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n;};
  const image=(url,alt,cls)=>{const n=el('img',cls);n.src=url;n.alt=alt||'';return n;};
  const name=id=>current.act.cast.find(p=>p.id===id)?.name||id;
@@ -11,7 +11,7 @@ window.ActOne=(()=>{
  async function action(type,payload={}){
   if(pending||current.paused)return;pending=true;updateInventory();
   const request={type,key:current.act.key,nonce:crypto.randomUUID(),...payload};
-  try{await send(request);}catch(e){const error=document.querySelector('#error');error.hidden=false;error.textContent=e.message;}finally{pending=false;update();updateInventory();}
+  try{await send(request);}catch(e){window.GameNotice?.show(e.message);}finally{pending=false;update();updateInventory();}
  }
  function button(parent,text,type,payload={},cls='act-button'){const b=el('button',cls,text);b.type='button';b.onclick=()=>action(type,typeof payload==='function'?payload():payload);parent.append(b);return b;}
  function stat(parent,label,value,cls){const n=el('div','act-stat '+(cls||''));n.append(el('span','',label),el('strong','',value));parent.append(n);return n;}
@@ -46,45 +46,33 @@ window.ActOne=(()=>{
   const item=items.find(i=>i.id===pouchSelected);
   if(item&&!hostMode){
    const detail=el('section','inventory-detail');detail.append(el('h2','',item.name),el('p','',item.help));
-   if(item.id==='magnifier'&&item.usable)detail.append(el('p','', 'Выбрана картина '+(selected+1)+'. Чтобы выбрать другую, закрой это окно и коснись картины.'));
-   if(item.usable){const use=button(detail,'Использовать','use',()=>({item:item.id,...(item.id==='magnifier'?{painting:selected}:{})}));use.disabled=pending||current.paused||(item.id==='magnifier'&&current.act.paintings?.[selected]?.solved);}
+   if(item.id==='magnifier'&&item.usable)detail.append(el('p','', 'Твоя цель — картина '+(selected+1)+'.'));
+   if(item.usable){const use=button(detail,'Использовать','use',()=>({item:item.id,...(item.id==='magnifier'?{painting:selected}:{})}));use.disabled=pending||current.paused||(item.id==='magnifier'&&current.act.paintings?.find(p=>p.index===selected)?.solved);}
    const close=el('button','act-button quiet','Закрыть');close.type='button';close.onclick=()=>{pouchSelected=null;updateInventory();};detail.append(close);pouch.append(detail);
   }
  }
- function makeHunt(parent){const stats=el('div','act-stats');stat(stats,'Осталось','1:00','hunt-time');stat(stats,'Поимки','0 / 8','hunt-hits');stat(stats,'Промахи','0','hunt-misses');parent.append(stats);const cells=el('div','hunt-niches');for(const slot of current.act.hunt.slots){const n=el(hostMode?'div':'button','hunt-niche');n.dataset.cell=slot.index;if(!hostMode){n.type='button';n.onclick=()=>action('tap',{cell:slot.index,spawn:current.act.hunt.spawn});}n.setAttribute('aria-label','Ниша '+(slot.index+1));n.append(image('/art/act1/props/niche.webp','','niche-art'),el('span','niche-number',slot.index+1),image('/art/castle/peeves.webp','Пивз','niche-peeves'),el('span','niche-owner',hostMode?name(slot.owner):'Твоя ниша'));cells.append(n);}parent.append(cells);}
- function makePortraits(parent){const wall=el('div','portrait-wall');for(const p of current.act.paintings){const card=el(hostMode?'figure':'button','puzzle-portrait');card.dataset.painting=p.index;if(!hostMode){card.type='button';card.onclick=()=>{selected=p.index;lastFeedback=null;update();updateInventory();};}card.append(image(p.image,'Картина '+(p.index+1)),el('span','painting-number','Картина '+(p.index+1)),el('span','painting-letter'));wall.append(card);}parent.append(wall);
- const word=el('div','portrait-word');for(let i=0;i<6;i++)word.append(el('span'));parent.append(word);
- if(!hostMode){const editor=el('section','portrait-editor');editor.append(el('h2','selected-title'));const link=el('a','act-button ar-link','Открыть загадку через камеру');link.target='_blank';link.rel='noopener noreferrer';editor.append(link,el('p','portrait-help','Вернись сюда после просмотра загадки и введи ответ.'));
-  const form=el('form','portrait-form'),input=el('input');input.maxLength=100;input.placeholder='Ответ на загадку';input.autocomplete='off';input.setAttribute('aria-label','Ответ на выбранную картину');input.oninput=()=>drafts.set(current.run+':'+selected,input.value);form.append(input,el('button','act-button','Ответить'));form.onsubmit=e=>{e.preventDefault();void action('answer',{painting:selected,answer:input.value});};editor.append(form,el('p','answer-feedback'),el('p','portrait-hint'));const help=el('div','portrait-actions');button(help,'Первая буква · 1 мон.','propose',()=>({kind:'portrait-hint',target:selected}),'act-button quiet hint-buy');button(help,'Поговорить с портретом','talk',{},'act-button quiet portrait-talk');editor.append(help);parent.append(editor);
- }}
- function makeGears(parent){
-  const a=current.act,g=a.gears,practice=a.kind==='practice';
-  const stats=el('div','act-stats');stat(stats,practice?'Пробный механизм':'Раунд',practice?'Без таймера':g.round+' / 3','gear-round');
-  if(!practice)stat(stats,a.kind==='memory'?'Начнём через':'Осталось','3:00','gear-time');
-  if(!practice)stat(stats,'Совпало','0 из 6','gear-progress');parent.append(stats);
-  if(!hostMode){const strip=el('div','gear-overview');strip.setAttribute('aria-label','Общий механизм');for(let i=0;i<6;i++){const n=el('span','overview-wheel');n.dataset.wheel=i;strip.append(n);}parent.append(strip);}
-  const ring=el('div','gear-ring');
-  if(hostMode){
-   const links=document.createElementNS('http://www.w3.org/2000/svg','svg');links.setAttribute('viewBox','0 0 100 100');links.setAttribute('preserveAspectRatio','none');links.setAttribute('class','gear-links');links.setAttribute('aria-hidden','true');
-   for(let i=0;i<6;i++){const line=document.createElementNS('http://www.w3.org/2000/svg','line'),a=(-90+i*60)*Math.PI/180,b=(-90+(i+1)*60)*Math.PI/180;for(const [k,v]of Object.entries({x1:50+36*Math.cos(a),y1:50+35*Math.sin(a),x2:50+36*Math.cos(b),y2:50+35*Math.sin(b)}))line.setAttribute(k,String(v));links.append(line);}ring.append(links);
-   const badge=el('div','gear-heart');badge.append(el('span','',practice?'ТРЕНИРОВКА':'МЕХАНИЗМ'),el('strong','',practice?'✦':'I'));ring.append(badge);
-  }
-  for(let i=0;i<6;i++){
-   if(!hostMode&&g.owners[i].owner!==player)continue;
-   const gear=el(hostMode?'div':'button','gear-unit');gear.dataset.gear=i;
-   if(!hostMode){gear.type='button';gear.onclick=()=>action(current.act.kind==='practice'?'practice-turn':'turn',{gear:i});}
-   const a=(-90+i*60)*Math.PI/180;gear.style.setProperty('--gx',(50+36*Math.cos(a))+'%');gear.style.setProperty('--gy',(50+35*Math.sin(a))+'%');
-   const dial=el('div','gear-dial');dial.append(el('div','gear-teeth'));
-   for(let j=0;j<6;j++){const mark=el('span','gear-mark',j+1),angle=j*Math.PI/3;mark.style.left=(50+36*Math.sin(angle))+'%';mark.style.top=(50-36*Math.cos(angle))+'%';dial.append(mark);}
-   if(!practice)dial.append(el('i','gear-target'));
-   dial.append(el('i','gear-needle'),el('i','gear-pin'));
-   gear.append(el('span','gear-id','№ '+(i+1)),dial,el('span','gear-owner'),el('span','gear-position'));
-   if(!hostMode)gear.append(el('span','gear-touch','Нажми: +1'),el('small','gear-neighbors','Соседи № '+((i+5)%6+1)+' и № '+((i+1)%6+1)+' повернутся −1'));
-   ring.append(gear);
-  }
-  parent.append(ring,el('p','gear-last-turn'),el('p','gear-hint'),el('p','gear-retry'));
-  if(practice)makeReady(parent,'Понятно, начинаем');
-  else if(!hostMode){const controls=el('div','gear-actions');button(controls,'Подсказка · 2 мон.','propose',{kind:'gear-hint'},'act-button quiet gear-buy');parent.append(controls);}
+ function makeHunt(parent){const stats=el('div','act-stats');stat(stats,'Осталось','1:00','hunt-time');stat(stats,'Поимки','0','hunt-hits');stat(stats,'Промахи','0','hunt-misses');parent.append(stats);const cells=el('div','hunt-niches');for(const slot of current.act.hunt.slots){const n=el(hostMode?'div':'button','hunt-niche');n.dataset.cell=slot.index;if(!hostMode){n.type='button';n.onclick=()=>{const h=current.act.hunt,c=h.config,t=current.act.elapsedMs+(current.paused?0:performance.now()-receivedAt)-c.lead,spawn=Math.floor(t/c.interval),token=slot.owner+':'+spawn;if(t>=0&&h.schedule[spawn]?.includes(slot.index)&&t%c.interval<c.visible&&!localHits.has(token)){localHits.add(token);n.classList.remove('visible');n.classList.add('caught');navigator.vibrate?.(25);}void action('tap',{cell:slot.index,spawn});};}n.setAttribute('aria-label','Ниша '+(slot.index+1));n.append(image('/art/act1/props/niche.webp','','niche-art'),el('span','niche-number',slot.index+1),image('/art/castle/peeves.webp','Пивз','niche-peeves'),el('span','niche-owner',hostMode?name(slot.owner):'Твоя ниша'));cells.append(n);}parent.append(cells);}
+ function makePortraits(parent){
+  const a=current.act;
+  if(hostMode){const wall=el('div','portrait-wall');for(const p of a.paintings){const card=el('figure','puzzle-portrait');card.dataset.painting=p.index;card.append(image(p.image,'Картина '+(p.index+1)),el('span','painting-number','Картина '+(p.index+1)),el('span','painting-letter'));wall.append(card);}parent.append(wall);}
+  const word=el('div','portrait-word');for(let i=0;i<6;i++)word.append(el('span'));parent.append(word);
+  if(hostMode)return;
+  const p=a.paintings[0];
+  if(!p){parent.append(el('p','portrait-finished','Твои картины разгаданы. Помоги друзьям найти оставшиеся портреты.'));return;}
+  const editor=el('section','portrait-editor');editor.append(el('span','quest-eyebrow','ТВОЙ ПОРТРЕТ'),el('h2','selected-title','Найди картину '+(p.index+1)),el('p','portrait-clue',p.clue));
+  const link=el('a','act-button ar-link','Открыть картину '+(p.index+1));link.href=p.url;link.target='_blank';link.rel='noopener noreferrer';editor.append(link,el('p','portrait-help','Найди этот портрет в комнате, открой ссылку и наведи камеру на картину. Затем вернись сюда с ответом.'));
+  const form=el('form','portrait-form'),input=el('input');input.maxLength=100;input.placeholder='Ответ на загадку';input.autocomplete='off';input.setAttribute('aria-label','Ответ на твою картину');input.value=drafts.get(current.run+':'+selected)||'';input.oninput=()=>drafts.set(current.run+':'+selected,input.value);form.append(input,el('button','act-button','Ответить'));form.onsubmit=e=>{e.preventDefault();void action('answer',{painting:selected,answer:input.value});};
+  editor.append(form,el('p','answer-feedback'),el('p','portrait-hint'));const help=el('div','portrait-actions');button(help,'Первая буква · 1 мон.','propose',()=>({kind:'portrait-hint',target:selected}),'act-button quiet hint-buy');if(selected===0)button(help,'Поговорить с портретом','talk',{},'act-button quiet portrait-talk');editor.append(help);parent.append(editor);
+ }
+ function chimeIcon(index){
+  const paths=['M39 8A22 22 0 1 0 39 56A25 25 0 0 1 39 8Z','M32 5L39 24L59 32L39 40L32 59L25 40L5 32L25 24Z','M34 5C39 23 52 25 52 40A20 20 0 0 1 12 40C12 31 18 22 24 17C22 31 27 33 30 30C35 25 27 18 34 5Z','M52 9C19 7 6 25 18 44C37 56 55 43 52 9ZM13 53L43 23','M32 6L52 22L45 48L32 59L19 48L12 22ZM12 22H52M19 48L32 6L45 48M19 48H45','M32 18A14 14 0 1 0 32 46A14 14 0 1 0 32 18ZM32 3V10M32 54V61M3 32H10M54 32H61M11 11L16 16M48 48L53 53M11 53L16 48M48 16L53 11'];
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 64 64');svg.setAttribute('class','chime-symbol');svg.setAttribute('aria-hidden','true');const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',paths[index]);path.setAttribute('fill','none');path.setAttribute('stroke','currentColor');path.setAttribute('stroke-width','2');path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');svg.append(path);return svg;
+ }
+ function makeChimes(parent){
+  const stats=el('div','act-stats');stat(stats,'Ступень','1 / 6','chime-round');stat(stats,'Осталось','1:30','chime-time');parent.append(stats);
+  const stage=el('div','chime-stage');stage.append(el('span','quest-eyebrow','ПРОБУДИТЕ КОЛОКОЛ'),el('h2','chime-status'),el('p','chime-help'));
+  const pads=el('div','chime-pads');for(const p of current.act.chimes.pads){const b=el(hostMode?'div':'button','chime-pad');b.dataset.pad=p.index;b.style.setProperty('--chime',p.color);b.append(chimeIcon(p.index),el('span','chime-name',p.name));if(hostMode)b.append(el('small','chime-owner',name(p.owner)));else{b.type='button';b.setAttribute('aria-label',p.name);b.onclick=()=>action('chime',{pad:p.index,version:current.act.chimes.version});}pads.append(b);}stage.append(pads,el('div','chime-beats'));parent.append(stage);
+  if(!hostMode){const actions=el('div','chime-actions');button(actions,'Посмотреть ещё раз','replay',()=>({version:current.act.chimes.version}),'act-button quiet chime-replay');button(actions,'Следующий знак · 1 мон.','propose',{kind:'chime-hint'},'act-button quiet chime-hint');parent.append(actions);}
  }
  function build(parent){const a=current.act;root=el('section','act-screen '+(hostMode?'act-tv':'act-phone'));root.dataset.kind=a.kind;root.style.backgroundImage=current.scene?.backgroundUrl?'url('+current.scene.backgroundUrl+')':'none';if(!hostMode)root.style.backgroundImage='linear-gradient(#0b1323e8,#0b1323f5),url(/art/act1/tower.webp)';root.setAttribute('aria-label','Акт I. Часовая башня');
  if(hostMode&&!['title','end'].includes(a.kind)){const top=el('div','act-kicker','АКТ I · ЧАСОВАЯ БАШНЯ');root.append(top);}
@@ -93,7 +81,7 @@ window.ActOne=(()=>{
  else if(a.kind==='shop')makeShop(main);
  else if(a.kind==='hunt')makeHunt(main);
  else if(a.kind==='portraits')makePortraits(main);
- else if(['practice','memory','gears'].includes(a.kind))makeGears(main);
+ else if(a.kind==='chimes')makeChimes(main);
  else if(a.kind==='note'){main.append(el('div','peeves-note'));makeShop(main);}
  else if(a.kind==='ready'){if(a.id==='act-result')main.append(el('div','act-seal','I / V'));if(a.id==='act-result')main.append(el('p','act-summary'));makeReady(main,a.id==='act-result'?'Завершить акт':'Готов');}
  else if(a.kind==='chest'){main.append(image('/art/act1/props/chest.webp','Открытый сундук с ключом','chest-art'));}
@@ -102,54 +90,41 @@ window.ActOne=(()=>{
  function update(){updateInventory();if(!root||!current||!root.isConnected)return;const a=current.act;
  root.querySelector('.act-heading').textContent=['title','end'].includes(a.kind)?'':a.title||'';
  root.querySelector('.act-instruction').textContent=a.instruction||'';
- const event=root.querySelector('.act-event');event.textContent=current.event?.text?(current.event.speaker?current.event.speaker+': ':'')+current.event.text:'';
+ const event=root.querySelector('.act-event');event.textContent=current.event?.text&&localRemaining(current.event.remainingMs||0)>0?(current.event.speaker?current.event.speaker+': ':'')+current.event.text:'';
  for(const b of root.querySelectorAll('button'))b.disabled=Boolean(current.paused||pending);
  const ready=root.querySelector('.act-ready');if(ready)ready.textContent='Готовы '+a.ready.length+' из '+a.total;
  const cont=root.querySelector('.act-continue');if(cont){cont.disabled ||=a.ready.includes(player)||Boolean(a.vote);cont.textContent=a.ready.includes(player)?'Ждём остальных':a.id==='act-result'?'Завершить акт':a.kind==='shop'?'Продолжить путь':a.kind==='practice'?'Понятно, начинаем':'Готов';}
- const vote=root.querySelector('.act-vote');vote.hidden=!a.vote;if(a.vote){vote.querySelector('.vote-title').textContent=a.vote.label+' · '+a.vote.cost+' мон.';vote.querySelector('.vote-progress').textContent='За: '+a.vote.yes.length+' из '+a.vote.needed+' · '+seconds(localRemaining(a.vote.remainingMs))+' сек.';for(const b of vote.querySelectorAll('button'))b.disabled ||=a.vote.yes.includes(player)||a.vote.no.includes(player);}
+ const vote=root.querySelector('.act-vote');vote.hidden=!a.vote||localRemaining(a.vote?.remainingMs||0)<=0;vote.classList.toggle('vote-answered',Boolean(!hostMode&&a.vote&&(a.vote.yes.includes(player)||a.vote.no.includes(player))));if(a.vote){vote.querySelector('.vote-title').textContent=a.vote.label+' · '+a.vote.cost+' мон.';vote.querySelector('.vote-progress').textContent='За: '+a.vote.yes.length+' из '+a.vote.needed+' · '+seconds(localRemaining(a.vote.remainingMs))+' сек.';for(const b of vote.querySelectorAll('button'))b.disabled ||=a.vote.yes.includes(player)||a.vote.no.includes(player);}
  for(const tile of root.querySelectorAll('.act-item')){const bought=a.inventory[tile.dataset.item];tile.classList.toggle('bought',Boolean(bought));const b=tile.querySelector('button');if(b){b.textContent=bought?'У команды':'Предложить покупку';b.disabled ||=Boolean(bought||a.vote);}}
  const note=root.querySelector('.peeves-note');if(note){note.textContent=a.note||(a.inventory.note?'Свиток у команды. Разверните его в инвентаре.':'Пивз оставил свиток. Его можно выкупить или продолжить путь.');root.querySelector('.act-items').hidden=Boolean(a.inventory.note);}
  const reading=root.querySelector('.note-reading');reading.hidden=!(a.kind==='portraits'&&a.note&&localRemaining(a.noteReadingMs||0)>0);reading.textContent=a.note||'';
  const summary=root.querySelector('.act-summary');if(summary)summary.textContent='Заработано: '+a.earned+' · Потрачено: '+a.spent+' · В банке: '+current.bank.balance;
- if(a.hunt){root.querySelector('.hunt-time strong').textContent=clock(localRemaining(a.hunt.remainingMs));root.querySelector('.hunt-hits strong').textContent=a.hunt.hits+' / 8';root.querySelector('.hunt-misses strong').textContent=a.hunt.misses;root.classList.toggle('urgent',a.hunt.remainingMs<10000);for(const cell of root.querySelectorAll('.hunt-niche')){const on=Number(cell.dataset.cell)===a.hunt.cell&&localRemaining(a.hunt.visibleMs)>0;cell.classList.toggle('visible',on);cell.setAttribute('aria-label','Ниша '+(Number(cell.dataset.cell)+1)+(on?' — Пивз здесь':''));}}
- if(a.paintings){for(const tile of root.querySelectorAll('.puzzle-portrait')){const p=a.paintings[Number(tile.dataset.painting)];tile.classList.toggle('solved',p.solved);tile.classList.toggle('selected',p.index===selected);tile.querySelector('.painting-letter').textContent=p.letter;}
-  [...root.querySelector('.portrait-word').children].forEach((n,i)=>n.textContent=a.paintings[i].letter||'·');
-  if(!hostMode){const p=a.paintings[selected],editor=root.querySelector('.portrait-editor');editor.querySelector('.selected-title').textContent='Картина '+(selected+1)+(p.solved?' · решена':'');editor.querySelector('.ar-link').href=p.url;
-   const input=editor.querySelector('input');if(input.dataset.painting!==String(selected)){input.dataset.painting=String(selected);editor.querySelector('.answer-feedback').textContent='';input.value=drafts.get(current.run+':'+selected)||'';}
-   input.disabled=p.solved||current.paused;editor.querySelector('.portrait-form button').disabled ||=p.solved;editor.querySelector('.portrait-hint').textContent=p.reveal?'Ответ: '+p.reveal:p.hint?'Первая буква ответа: '+p.hint:'';
-   editor.querySelector('.hint-buy').disabled ||=Boolean(p.solved||p.hint||p.reveal||a.vote);editor.querySelector('.portrait-talk').hidden=selected!==0;editor.querySelector('.portrait-talk').disabled ||=a.talked;
-   const f=a.feedback,key=f&&f.at+':'+f.by+':'+f.painting;if(key&&key!==lastFeedback&&f.painting===selected){lastFeedback=key;editor.querySelector('.answer-feedback').textContent=f.correct?'Верно. Буква открыта.':'Пока не подходит. Попробуй ещё раз.';if(!f.correct&&f.by===player){input.value='';drafts.delete(current.run+':'+selected);editor.animate?.([{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],{duration:200});}}
+ if(a.hunt){
+  const h=a.hunt,c=h.config,t=a.elapsedMs+(current.paused?0:performance.now()-receivedAt)-c.lead,spawn=Math.floor(t/c.interval);
+  root.querySelector('.hunt-time strong').textContent=t<0?'Старт через '+Math.ceil(-t/1000):clock(localRemaining(h.remainingMs));root.querySelector('.hunt-hits strong').textContent=h.hits+' / '+h.goal;root.querySelector('.hunt-misses strong').textContent=h.misses;
+  for(const cell of root.querySelectorAll('.hunt-niche')){const slot=h.slots.find(s=>s.index===Number(cell.dataset.cell)),token=slot.owner+':'+spawn,on=t>=0&&spawn<c.turns&&t%c.interval<c.visible&&h.schedule[spawn]?.includes(slot.index)&&!h.hitTokens.includes(token)&&!localHits.has(token);cell.classList.toggle('visible',Boolean(on));cell.classList.toggle('caught',t>=0&&t%c.interval<c.visible&&(h.hitTokens.includes(token)||localHits.has(token)));cell.setAttribute('aria-label','Арка '+(slot.index+1)+(on?' — Пивз здесь':''));}
+ }
+ if(a.paintings){
+  for(const tile of root.querySelectorAll('.puzzle-portrait')){const p=a.paintings.find(p=>p.index===Number(tile.dataset.painting));tile.classList.toggle('solved',p.solved);tile.querySelector('.painting-letter').textContent=p.letter;}
+  [...root.querySelector('.portrait-word').children].forEach((n,i)=>n.textContent=a.letters[i]||'·');
+  if(!hostMode&&a.paintings.length){const p=a.paintings[0],editor=root.querySelector('.portrait-editor');editor.querySelector('.portrait-hint').textContent=p.reveal?'Ответ: '+p.reveal:p.hint?'Первая буква: '+p.hint:'';editor.querySelector('.hint-buy').disabled ||=Boolean(p.hint||p.reveal||a.vote);const talk=editor.querySelector('.portrait-talk');if(talk)talk.disabled ||=a.talked;
+   const f=a.feedback;editor.querySelector('.answer-feedback').textContent=f&&f.painting===selected&&localRemaining(f.remainingMs)>0?(f.correct?'Верно!':'Пока не подходит. Попробуй ещё раз.'):'';
   }
  }
- if(a.gears){
-  const g=a.gears,practice=a.kind==='practice';
-  root.querySelector('.gear-round strong').textContent=practice?'Без таймера':g.round+' / 3';
-  const timer=root.querySelector('.gear-time strong');if(timer)timer.textContent=clock(localRemaining(g.remainingMs));
-  const progress=root.querySelector('.gear-progress strong');if(progress)progress.textContent=(a.kind==='memory'?6:g.matched)+' из 6';
-  const heart=root.querySelector('.gear-heart strong');if(heart)heart.textContent=practice?'✦':['I','II','III'][g.round-1];
-  for(const n of root.querySelectorAll('.overview-wheel')){const i=Number(n.dataset.wheel);n.textContent='№'+(i+1)+' · '+(g.positions[i]+1);n.classList.toggle('matched',!practice&&g.positions[i]===g.target[i]);n.classList.toggle('owned',g.owners[i].owner===player);}
-  for(const unit of root.querySelectorAll('.gear-unit')){
-   const i=Number(unit.dataset.gear),owner=g.owners[i].owner,pos=g.positions[i],target=g.target[i];
-   unit.querySelector('.gear-owner').textContent=name(owner)+(i===g.jam?' · заклинена':'');
-   let angle=Number(unit.dataset.angle||0);if(unit.dataset.position===undefined)angle=pos*60;else{let delta=pos-Number(unit.dataset.position);if(delta>3)delta-=6;if(delta< -3)delta+=6;angle+=delta*60;}unit.dataset.angle=angle;unit.dataset.position=pos;
-   unit.querySelector('.gear-needle').style.transform='rotate('+angle+'deg)';
-   const mark=unit.querySelector('.gear-target');if(mark)mark.style.transform='rotate('+(target*60)+'deg)';
-   unit.querySelector('.gear-position').textContent=practice?'Положение '+(pos+1):'Сейчас '+(pos+1)+' · цель '+(target+1);
-   unit.classList.toggle('owned',owner===player);unit.classList.toggle('matched',!practice&&pos===target);unit.classList.toggle('jammed',i===g.jam);unit.classList.toggle('hinted',g.hint===i);
-   const last=g.lastTurn,changed=last&&[last.gear,(last.gear+1)%6,(last.gear+5)%6].includes(i)&&i!==g.jam;
-   unit.classList.toggle('changed',Boolean(changed&&(last.ageMs||0)+(performance.now()-receivedAt)<1800));
-   unit.setAttribute('aria-label','Шестерёнка '+(i+1)+', '+name(owner)+', положение '+(pos+1)+(practice?'':', цель '+(target+1)));
-   if(!hostMode){unit.disabled ||=owner!==player||i===g.jam||a.kind==='memory';unit.querySelector('.gear-touch').textContent=i===g.jam?'Заклинена':a.kind==='memory'?'Скоро начнём':'Нажми: +1';}
-  }
-  root.querySelector('.gear-last-turn').textContent=g.lastTurn?name(g.lastTurn.by)+' нажал № '+(g.lastTurn.gear+1)+': своя +1, две соседние −1.':'';
-  root.querySelector('.gear-hint').textContent=g.hint!==null?'Следующий ход: № '+(g.hint+1)+' · '+name(g.owners[g.hint].owner):practice?'Следи за тремя стрелками после одного нажатия.':a.kind==='memory'?'Золотые отметки останутся на месте во время игры.':'Светлая стрелка — текущее положение. Золотая метка — цель.';
-  root.querySelector('.gear-retry').textContent=g.failures?'Повтор раунда: '+g.failures+(g.failures>=2?' · подсказка теперь 1 монета':''):'';
-  const buy=root.querySelector('.gear-buy');if(buy){buy.textContent='Подсказка · '+g.hintCost+' мон.';buy.disabled ||=Boolean(a.kind==='memory'||a.vote||g.hint!==null);}
-  root.classList.toggle('urgent',a.kind==='gears'&&g.remainingMs<30000);
+ if(a.chimes){
+  const g=a.chimes,t=g.modeElapsed+(current.paused?0:performance.now()-receivedAt),beat=Math.floor((t-1200)/1000),flash=g.mode==='show'&&t>=1200&&(t-1200)%1000<720?g.sequence?.[beat]:null;
+  if(hostMode&&!current.paused&&flash!=null)window.GameSound?.chime?.(flash,a.key+':'+g.version+':'+beat);
+  root.querySelector('.chime-round strong').textContent=g.round+' / 6';root.querySelector('.chime-time strong').textContent=g.mode==='show'?'Слушаем':clock(localRemaining(g.remainingMs));
+  const labels={show:'Смотрите и запоминайте',input:'Теперь ваша очередь',success:g.round===6?'Колокол пробуждён':'Верно. Звон становится длиннее',retry:'Попробуем ещё раз'};
+  root.querySelector('.chime-status').textContent=labels[g.mode];root.querySelector('.chime-help').textContent=g.mode==='input'?'Повторите последовательность по порядку. На телефоне каждый нажимает свои.':g.mode==='retry'?'Та же последовательность прозвучит снова. Монеты остаются у команды.':g.mode==='show'?'Запомните порядок. Нажимать пока не нужно.':'Вы звучите вместе.';
+  for(const b of root.querySelectorAll('.chime-pad')){const i=Number(b.dataset.pad);b.classList.toggle('lit',Boolean(flash===i||g.mode==='input'&&g.last?.correct&&g.last.pad===i&&g.last.ageMs+performance.now()-receivedAt<650));b.classList.toggle('hinted',g.mode==='input'&&g.hint===i);if(!hostMode)b.disabled ||=g.mode!=='input';}
+  const beats=root.querySelector('.chime-beats');if(beats.children.length!==g.length){beats.replaceChildren();for(let i=0;i<g.length;i++)beats.append(el('span'));}for(let i=0;i<g.length;i++)beats.children[i].className=i<g.position?'done':i===g.position?'next':'';
+  for(const b of root.querySelectorAll('.chime-actions button'))b.disabled ||=g.mode!=='input'||Boolean(a.vote);const hint=root.querySelector('.chime-hint');if(hint)hint.disabled ||=g.hint!==null;
  }
 
+
  }
- return{render(state,parent,display,submit,id){current=state;send=submit;player=id;hostMode=display;receivedAt=performance.now();const a=state.act;
+ return{render(state,parent,display,submit,id){current=state;send=submit;player=id;hostMode=display;receivedAt=performance.now();const a=state.act;if(lastStage!==a.key){pouchSelected=null;localHits.clear();lastStage=a.key;}if(a.kind==='portraits')selected=a.assignment??0;
   updateInventory();
   if(['line','black','travel'].includes(a.kind)){
    signature=null;root=null;
@@ -157,7 +132,7 @@ window.ActOne=(()=>{
    else {let waiting=parent.querySelector('.act-waiting');if(!waiting){waiting=el('section','panel act-waiting');waiting.append(el('h1','','Часовая башня'),el('p','','Смотри на общий экран.'));parent.replaceChildren(waiting);}}
    return;
   }
-  const key=a.key+':'+display;if(signature!==key||!root?.isConnected){signature=key;window.PrologueScene?.release?.();build(parent);}update();
+  const key=a.key+':'+display+':'+(a.assignment??'');if(signature!==key||!root?.isConnected){signature=key;window.PrologueScene?.release?.();build(parent);}update();
  },hide(){current=null;root=null;signature=null;pouchSelected=null;pouchKey=null;if(pouch)pouch.hidden=true;document.body.classList.toggle('has-inventory',false);},tick(){if(current?.phase==='act1')update();}};
 })();
 setInterval(()=>window.ActOne.tick(),100);
