@@ -11,9 +11,9 @@ function enter(room,index,now){const a=room.act1;a.index=index;a.stepId=SCRIPT[i
  if(step.kind==='hunt')a.hunt=createHunt(room.lineup,random);
  if(step.kind==='chimes'){a.chimes=createChimes(random);showChimes(a.chimes,now);}
 }
-export function beginAct1(room,now=Date.now()){if(room.act1)return;room.phase='act1';room.act1={version:3,index:0,serial:0,startedAt:now,clock:now,ready:[],inventory:{},used:{},solved:[],firstHints:[],reveals:{},receipts:[],eventSerial:0,cleanRounds:0,spentAtStart:room.bank.spent,earnedAtStart:room.bank.earned};enter(room,0,now);}
+export function beginAct1(room,now=Date.now()){if(room.act1)return;room.phase='act1';room.act1={version:4,index:0,serial:0,startedAt:now,clock:now,ready:[],inventory:{},used:{},solved:[],firstHints:[],reveals:{},receipts:[],eventSerial:0,cleanRounds:0,spentAtStart:room.bank.spent,earnedAtStart:room.bank.earned};enter(room,0,now);}
 const go=(room,now)=>enter(room,room.act1.index+1,now);
-function finishHunt(room){const a=room.act1,n=a.hunt.hits.length;if(n>=room.lineup.length*8)a.inventory.note=true;if(n>=room.lineup.length*12)money(room,2,'act1:hunt');}
+function finishHunt(room){const a=room.act1,n=a.hunt.hits.length;if(n>=8)a.inventory.note=true;if(n>=10)money(room,2,'act1:hunt');}
 function settleVote(room){const a=room.act1,v=a.vote;if(!v)return;const cost=v.cost;
  if(room.bank.balance<cost){a.vote=null;event(room,'pickup','В общем банке недостаточно монет.');return;}
  // Revalidate a state-sensitive hint when the team approves it.
@@ -27,9 +27,9 @@ function settleVote(room){const a=room.act1,v=a.vote;if(!v)return;const cost=v.c
 }
 export function tickAct1(room,now=Date.now()){
  if(room.phase!=='act1')return false;const a=room.act1,time=nowOf(room,now);a.clock=time;let dirty=false;
- if(a.version!==3){
+ if(a.version!==4){
   const old=a.stepId||LEGACY_ACT1_IDS[a.index];const id=/^(gear-|mechanism-explanation)/.test(old||'')?'chime-explanation':old==='act-silence'?'vestibule-return':old;
-  const index=Math.max(0,SCRIPT.findIndex(s=>s.id===id));a.version=3;
+  const index=Math.max(0,SCRIPT.findIndex(s=>s.id===id));a.version=4;
   // Reaction schedule and removed gear stages restart safely; other progress stays intact.
   if(id!==old||id==='hunt')enter(room,index,time);else{a.index=index;a.stepId=SCRIPT[index].id;a.serial++;a.vote=null;a.event=null;}
   dirty=true;
@@ -37,6 +37,7 @@ export function tickAct1(room,now=Date.now()){
  if(a.vote&&time>=a.vote.until){a.vote=null;event(room,'pickup','Голосование завершено. Покупка не состоялась.');dirty=true;}
  for(let guard=0;guard<60;guard++){
   const step=stepOf(room),elapsed=time-a.startedAt;
+  if((step.id==='peeves-six'&&a.hunt.hits.length<6)||(step.id==='peeves-ten'&&a.hunt.hits.length<10)){go(room,time);dirty=true;continue;}
   if(step.durationMs&&elapsed>=step.durationMs){go(room,a.startedAt+step.durationMs);dirty=true;continue;}
   if(step.kind==='hunt'&&elapsed>=huntDuration){finishHunt(room);go(room,a.startedAt+huntDuration);dirty=true;continue;}
   if(step.kind==='chimes'){
@@ -90,10 +91,10 @@ export function act1Action(room,player,action,input,now=Date.now()){
   if(step.kind!=='hunt')return;const h=a.hunt,elapsed=time-a.startedAt-HUNT.lead,spawn=input.spawn,owner=room.lineup.indexOf(id);
   if(!Number.isInteger(input.cell)||input.cell<owner*3||input.cell>=owner*3+3)fail('Это не твоя арка.',403);
   if(!Number.isInteger(spawn)||spawn<0||spawn>=HUNT.turns)return;
-  const token=id+':'+spawn;if(h.hits.includes(token)||time-(h.lastTap[id]??-Infinity)<140)return;h.lastTap[id]=time;
+  h.attempted ||= [];const token=id+':'+spawn;if(h.attempted.includes(token)||h.hits.includes(token)||time-(h.lastTap[id]??-Infinity)<140)return;h.lastTap[id]=time;
   const age=elapsed-spawn*HUNT.interval;
   if(age>=0&&age<=HUNT.visible+HUNT.grace&&h.schedule[spawn][owner]===input.cell){h.hits.push(token);event(room,'pickup');}
-  else if(age>=0&&age<HUNT.interval){h.misses++;}
+  else if(age>=0&&age<HUNT.interval){h.misses++;h.attempted.push(token);}
  }else if(action==='answer'){
   if(step.kind!=='portraits'||!Number.isInteger(input.painting)||input.painting<0||input.painting>5||typeof input.answer!=='string'||input.answer.length>100)fail('Выбери картину и введи ответ.',400);
   const i=input.painting;if(i!==currentPainting(room,id)){if(a.solved.includes(i))return;fail('Это задание другого участника.',403);}if(!a.solved.includes(i)){
@@ -137,7 +138,7 @@ export function act1View(room,cast,playerId,host,now=Date.now()){
  if(['shop','note'].includes(step.kind))v.items=ITEMS.filter(x=>step.kind==='shop'||x.id==='note');
  if(['note','portraits'].includes(step.kind)){v.note=a.used.note?NOTE:null;if(a.noteReadAt!=null)v.noteReadingMs=Math.max(0,14000-(time-a.noteReadAt));}
  if(step.kind==='hunt'){
-  const h=a.hunt,cols=room.lineup.length;v.hunt={config:HUNT,remainingMs:Math.max(0,huntDuration-elapsed),hits:h.hits.length,misses:h.misses,goal:cols*8,bonus:cols*12,hitTokens:h.hits,schedule:h.schedule.map(row=>host?row:row.filter((_,i)=>room.lineup[i]===playerId)),slots:room.lineup.flatMap((id,i)=>Array.from({length:3},(_,j)=>({index:i*3+j,owner:id}))).filter(x=>host||x.owner===playerId)};
+  const h=a.hunt,cols=room.lineup.length;v.hunt={config:HUNT,remainingMs:Math.max(0,huntDuration-elapsed),hits:h.hits.length,misses:h.misses,goal:8,bonus:10,hitTokens:h.hits,schedule:h.schedule.map(row=>host?row:row.filter((_,i)=>room.lineup[i]===playerId)),slots:room.lineup.flatMap((id,i)=>Array.from({length:3},(_,j)=>({index:i*3+j,owner:id}))).filter(x=>host||x.owner===playerId)};
  }
  if(step.kind==='portraits'){
   const own=currentPainting(room,playerId);v.assignment=own;v.letters=PAINTINGS.map((p,i)=>a.solved.includes(i)?p[2]:'');v.solvedCount=a.solved.length;
@@ -148,7 +149,7 @@ export function act1View(room,cast,playerId,host,now=Date.now()){
   const g=a.chimes;v.chimes={round:g.round,total:6,length:g.sequence.length,mode:g.mode,modeElapsed:time-g.modeAt,position:g.position,version:g.version,mistakes:g.mistakes,replays:g.replays,remainingMs:Math.max(0,g.deadline-time),sequence:g.mode==='show'?g.sequence:null,hint:g.hint===g.position?g.sequence[g.position]:null,last:g.last?{...g.last,ageMs:time-g.last.at}:null,pads:CHIMES.map((c,i)=>({...c,index:i,owner:room.lineup[i%room.lineup.length]})).filter(c=>host||c.owner===playerId)};
  }
 
- let text=step.text;if(step.id==='peeves-result')text=a.hunt.hits.length>=room.lineup.length*8?'Ладно. Вот записка. Больше не просите.':'Вы безнадёжны! Записку только за монету, и не просите бесплатно!';
+ let text=step.text;if(step.id==='peeves-result')text=a.hunt.hits.length>=8?'Ладно. Вот записка. Больше не просите.':'Вы безнадёжны! Записку только за монету, и не просите бесплатно!';
  const scene={...step,text,key,elapsedMs:elapsed,cast:v.cast,visual:step.kind==='line'?'castle-dialogue':step.kind==='black'?'blackout':step.kind==='travel'?'act-travel':'act1',backgroundUrl:step.background?(['tower','corridor'].includes(step.background)?'/art/act1/':'/art/castle/')+step.background+'.webp':undefined,musicUrgent:step.kind==='hunt'&&v.hunt.remainingMs<10000||step.kind==='chimes'&&v.chimes.remainingMs<30000};
  return{act:v,...(host?{scene,soundEvent:activeEvent}:{}),event:activeEvent?{id:activeEvent.id,text:activeEvent.text,speaker:activeEvent.speaker,remainingMs:4000-(time-activeEvent.at)}:null};
 }

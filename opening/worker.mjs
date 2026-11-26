@@ -37,7 +37,7 @@ function phase(room, now = Date.now()) {
   if (room.phase === 'act1') return 'act1';
   if (room.phase === 'story') return 'story';
   if (!room.revealAt) return room.phase;
-  if (now >= titleAt(room)+5000) return 'story';
+  
   if (now >= titleAt(room)) return 'title';
   if (now >= lineupAt(room)) return 'lineup';
   return now >= room.revealAt ? 'credits' : 'crossing';
@@ -261,6 +261,8 @@ async function applyAction(txn, room, action, auth, input) {
     room.run = token(); room.phase = 'opening';
     room.revealAt = Date.now() + 1200;
     room.storyIndex=0;room.storyStartedAt=titleAt(room)+5000;room.introductions={};room.tickets={};room.sweets={};room.wishes={};
+  } else if (action === 'start' && phase(room) === 'title' && room.pausedAt == null) {
+    room.phase='story';room.storyIndex=0;room.storyStartedAt=Date.now();
   } else if (action === 'cross' && phase(room) === 'platform' && room.pausedAt == null) {
     room.revealAt = Date.now() + 1800;
   } else {

@@ -15,7 +15,7 @@ for(let count=1;count<=6;count++)test(`${count} players: complete automatic prol
  const state=async(auth='screen')=>(await call('state',auth)).data;
  for(const a of ['start','pause','resume','restart','next','sound'])assert.equal((await call(a,'screen',{})).status,403);
  await call('start','oleg',{});now=room.revealAt+count*2600+3600;assert.equal((await state()).phase,'title');assert.equal((await state('oleg')).advance,undefined);
- now+=5000;assert.equal((await state()).scene.id,'blackout');
+ now+=60000;assert.equal((await state()).phase,'title');await call('start','oleg',{});assert.equal((await state()).scene.id,'blackout');
  const seen=[],spoken=[];
  for(let guard=0;guard<180;guard++){
   const sc=(await state()).scene;seen.push(sc.id);if(sc.end)break;

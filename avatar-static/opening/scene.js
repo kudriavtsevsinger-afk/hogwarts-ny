@@ -25,6 +25,7 @@ window.PrologueScene = (() => {
       const frames={mcgonagall:{neutral:0,smile:1,concerned:2},hagrid:{smile:0,embarrassed:1,neutral:2},dumbledore:{smile:0,amused:1,concerned:2}};
       const n=el('div','story-actor full-body-npc');n.dataset.npc=id;n.style.backgroundImage='url('+castle+id+'.webp)';n.style.backgroundPosition=((frames[id][expression]??0)*50)+'% 0';n.setAttribute('role','img');n.setAttribute('aria-label',name||id);return n;
     }
+    if(id==='portrait')return img('/art/act1/painting-2.webp',name,'story-actor');
     if(id==='peeves')return img(castle+'peeves.webp',name,'story-actor peeves-actor');
     const npc=['caretaker','conductor'].includes(id);
     if(id==='vendor')return img(art2+'vendor.webp',name,'story-actor vendor-actor');

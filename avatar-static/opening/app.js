@@ -332,9 +332,10 @@ function adminControls() {
   const controls = element('aside', '', 'admin-console');
   controls.setAttribute('aria-label', 'Действия');
   if (state.phase === 'lobby') {
-    button(controls, 'Начать пролог', async () => accept(await api('/start', {})), 'primary-action').disabled = !state.canStart;
+    button(controls, 'Показать заставку', async () => accept(await api('/start', {})), 'primary-action').disabled = !state.canStart;
     if (!state.canStart) controls.append(element('p', 'Начало станет доступно, когда все участники закончат опрос.', 'hint'));
   } else {
+    if(state.phase==='title') button(controls,'Начать',async()=>accept(await api('/start',{})),'primary-action').disabled=state.paused;
     if (state.advance && !state.sceneEnded) {
       const stepKey=state.advance.key;
       button(controls,state.advance.label,async()=>accept(await api('/next',{key:stepKey})),'primary-action').disabled=!state.advance.enabled;

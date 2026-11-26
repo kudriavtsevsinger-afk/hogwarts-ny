@@ -62,7 +62,7 @@ window.ActOne=(()=>{
   const editor=el('section','portrait-editor');editor.append(el('span','quest-eyebrow','ТВОЙ ПОРТРЕТ'),el('h2','selected-title','Найди картину '+(p.index+1)),el('p','portrait-clue',p.clue));
   const link=el('a','act-button ar-link','Открыть картину '+(p.index+1));link.href=p.url;link.target='_blank';link.rel='noopener noreferrer';editor.append(link,el('p','portrait-help','Найди этот портрет в комнате, открой ссылку и наведи камеру на картину. Затем вернись сюда с ответом.'));
   const form=el('form','portrait-form'),input=el('input');input.maxLength=100;input.placeholder='Ответ на загадку';input.autocomplete='off';input.setAttribute('aria-label','Ответ на твою картину');input.value=drafts.get(current.run+':'+selected)||'';input.oninput=()=>drafts.set(current.run+':'+selected,input.value);form.append(input,el('button','act-button','Ответить'));form.onsubmit=e=>{e.preventDefault();void action('answer',{painting:selected,answer:input.value});};
-  editor.append(form,el('p','answer-feedback'),el('p','portrait-hint'));const help=el('div','portrait-actions');button(help,'Первая буква · 1 мон.','propose',()=>({kind:'portrait-hint',target:selected}),'act-button quiet hint-buy');if(selected===0)button(help,'Поговорить с портретом','talk',{},'act-button quiet portrait-talk');editor.append(help);parent.append(editor);
+  editor.append(form,el('p','answer-feedback'),el('p','portrait-hint'));const help=el('div','portrait-actions');button(help,'Нужна помощь · 1 мон.','propose',()=>({kind:'portrait-hint',target:selected}),'act-button quiet hint-buy');if(selected===0)button(help,'Поговорить с портретом','talk',{},'act-button quiet portrait-talk');editor.append(help);parent.append(editor);
  }
  function chimeIcon(index){
   const paths=['M39 8A22 22 0 1 0 39 56A25 25 0 0 1 39 8Z','M32 5L39 24L59 32L39 40L32 59L25 40L5 32L25 24Z','M34 5C39 23 52 25 52 40A20 20 0 0 1 12 40C12 31 18 22 24 17C22 31 27 33 30 30C35 25 27 18 34 5Z','M52 9C19 7 6 25 18 44C37 56 55 43 52 9ZM13 53L43 23','M32 6L52 22L45 48L32 59L19 48L12 22ZM12 22H52M19 48L32 6L45 48M19 48H45','M32 18A14 14 0 1 0 32 46A14 14 0 1 0 32 18ZM32 3V10M32 54V61M3 32H10M54 32H61M11 11L16 16M48 48L53 53M11 53L16 48M48 16L53 11'];
@@ -84,7 +84,7 @@ window.ActOne=(()=>{
  else if(a.kind==='chimes')makeChimes(main);
  else if(a.kind==='note'){main.append(el('div','peeves-note'));makeShop(main);}
  else if(a.kind==='ready'){if(a.id==='act-result')main.append(el('div','act-seal','I / V'));if(a.id==='act-result')main.append(el('p','act-summary'));makeReady(main,a.id==='act-result'?'Завершить акт':'Готов');}
- else if(a.kind==='chest'){main.append(image('/art/act1/props/chest.webp','Открытый сундук с ключом','chest-art'));}
+ else if(a.kind==='chest'){main.append(el('p','act-instruction','Сундук открыт. Внутри: ключ от механизма башни.'));main.append(image('/art/act1/props/chest.webp','Открытый сундук с ключом','chest-art'));}
  else if(a.kind==='bell'){main.append(image('/art/castle/clock.webp','Часы','act-clock'));}
  }
  function update(){updateInventory();if(!root||!current||!root.isConnected)return;const a=current.act;

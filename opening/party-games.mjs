@@ -1,6 +1,6 @@
 // Original implementation of classic Whac-A-Mole and Simon rules for a shared screen.
 // Rule sources are recorded in docs/act1.md. No third-party code or artwork is bundled.
-export const HUNT={lead:3000,interval:2800,visible:2050,grace:450,turns:20};
+export const HUNT={lead:3000,interval:2800,visible:850,grace:450,turns:20};
 export const huntDuration=HUNT.lead+HUNT.interval*HUNT.turns;
 export const CHIMES=[
  {name:'Луна',symbol:'☾',color:'#82b9ec'}, {name:'Звезда',symbol:'✦',color:'#edc56b'},
