@@ -101,7 +101,7 @@ function accept(next) {
   bank.hidden=!state.bank;
   const hud=document.querySelector('#game-hud'),roster=document.querySelector('#team-roster');
   hud.hidden=!state.bank||Boolean(host&&(state.act&&['title','end','black'].includes(state.act.kind)||state.scene&&['blackout','final-title'].includes(state.scene.visual)));
-  const members=host && ['lineup','title','story','act1'].includes(state.phase)?(state.scene?.cast || state.lineup || []):[];
+  const members=host && ['lineup','title','story','act1','act2'].includes(state.phase)?(state.act2?.cast || state.scene?.cast || state.lineup || []):[];
   roster.hidden=!members.length;
   const rosterKey=members.map(p=>p.id+':'+p.name).join('|');
   if(roster.dataset.members!==rosterKey){roster.dataset.members=rosterKey;roster.replaceChildren(...members.map(p=>{const avatar=element('span','','team-avatar');avatar.title=p.name;avatar.append(image(p.id,p.name));return avatar;}));}
@@ -223,6 +223,7 @@ function render() {
     if (!host) adminControls();
     return;
   }
+  if(state.phase==='act2'){window.ActTwo.render(state,screen,host,async payload=>{revision++;const next=await api('/act',payload);revision++;accept(next);});if(!host)adminControls();return;}
   if(state.phase==='act1'){
     window.ActOne.render(state,screen,host,async payload=>{revision++;const next=await api('/act',payload);revision++;accept(next);},state.player?.id);
     if(!host)adminControls();return;

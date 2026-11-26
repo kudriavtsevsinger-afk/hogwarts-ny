@@ -1,3 +1,4 @@
+import {beginAct2,tickAct2,act2Action,act2View} from './act2.mjs';
 import { questions, score } from './quiz.mjs';
 import { introductions, storyPosition } from './scene01.mjs';
 import { sweets } from './scene02.mjs';
@@ -34,6 +35,7 @@ function lineupAt(room) { return room.revealAt + room.lineup.length * CARD_MS; }
 function titleAt(room) { return lineupAt(room) + LINEUP_MS; }
 function phase(room, now = Date.now()) {
   now = room.pausedAt ?? now;
+  if (room.phase === 'act2') return 'act2';
   if (room.phase === 'act1') return 'act1';
   if (room.phase === 'story') return 'story';
   if (!room.revealAt) return room.phase;
@@ -95,6 +97,7 @@ function view(room, auth) {
     }
   }
   if(current==='act1' && (host||player))Object.assign(state,act1View(room,cast,player?.id,host,now));
+  if(current==='act2'&&(host||player)){Object.assign(state,act2View(room,cast,player?.id,host,now));if(host)state.scene={id:state.act2.id,key:state.act2.key,elapsedMs:now-room.act2.at,music:state.act2.kind==='pot'?'joy':'ambient-3',...(state.act2.kind==='flower'?{music:null,cue:'midnight-three'}:{}),...(state.act2.id==='silence'?{music:null,soundCut:true}:{}),...(state.act2.id==='train-whistle'?{music:null,cue:'train-whistle',cueDuration:4}:{})};}
   return state;
 }
 export const OPENING_PATH = '/api/opening/rooms';
@@ -148,6 +151,8 @@ export class OpeningRoom {
           let dirty=false;if(!latest.bank){latest.bank=createBank();dirty=true;}
           if(phase(latest)==='story' && latest.pausedAt==null){const p=storyPosition(latest,cast);if(p.step.end && p.elapsedMs>=5000){beginAct1(latest,Date.now());dirty=true;}}
           if(tickAct1(latest))dirty=true;
+          if(latest.phase==='act1'&&latest.act1?.stepId==='act2-title'&&latest.pausedAt==null&&Date.now()-latest.act1.startedAt>=5000){beginAct2(latest);dirty=true;}
+          if(tickAct2(latest))dirty=true;
           if(dirty)await txn.put('room',latest);return latest;
         });
         if (action === 'state') return json(view(room, auth));
@@ -167,7 +172,7 @@ async function applyAction(txn, room, action, auth, input) {
   room.bank ||= createBank();
   if(action==='act'){
     const player=[...room.players.values()].find(p=>p.token===auth);
-    act1Action(room,player,input.type,input);await txn.put('room',room);return json(view(room,auth));
+    if(room.phase==='act2')act2Action(room,player,input.type,input);else act1Action(room,player,input.type,input);await txn.put('room',room);return json(view(room,auth));
   }
   const advance=(pos)=>{room.phase='story';room.storyIndex=pos.index+1;room.storyStartedAt=Date.now();};
   const advanceWhenReady=(pos,responses)=>{if(room.lineup.every(id=>Object.hasOwn(responses,id)))advance(pos);};
@@ -243,9 +248,10 @@ async function applyAction(txn, room, action, auth, input) {
     if (room.revealAt) room.revealAt += Date.now() - room.pausedAt;
     if (room.storyStartedAt != null) room.storyStartedAt += Date.now() - room.pausedAt;
     if(room.act1){const delta=Date.now()-room.pausedAt;room.act1.startedAt+=delta;if(room.act1.noteReadAt!=null)room.act1.noteReadAt+=delta;if(room.act1.chimes){room.act1.chimes.modeAt+=delta;room.act1.chimes.deadline+=delta;if(room.act1.chimes.last)room.act1.chimes.last.at+=delta;}if(room.act1.vote)room.act1.vote.until+=delta;if(room.act1.event)room.act1.event.at+=delta;for(const id of Object.keys(room.act1.hunt?.lastTap||{}))room.act1.hunt.lastTap[id]+=delta;}
+    if(room.act2){const d=Date.now()-room.pausedAt;room.act2.at+=d;if(room.act2.deadline)room.act2.deadline+=d;if(room.act2.lockedUntil)room.act2.lockedUntil+=d;if(room.act2.vote)room.act2.vote.until+=d;}
     delete room.pausedAt;
   } else if (action === 'restart') {
-    room.bank=createBank();delete room.act1;
+    room.bank=createBank();delete room.act1;delete room.act2;delete room.flags;for(const p of room.players.values()){delete p.ability;delete p.flags;}
     room.phase = 'lobby';
     delete room.revealAt; delete room.lineup; delete room.pausedAt;
     delete room.storyIndex; delete room.storyStartedAt; delete room.introductions; delete room.tickets; delete room.sweets; delete room.wishes;

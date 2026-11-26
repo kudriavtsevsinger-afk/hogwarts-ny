@@ -96,7 +96,7 @@ window.GameSound=(()=>{
   onComplete(fn){complete=fn;},
   init(display){gate.hidden=!display;if(display)for(let i=1;i<=43;i++)void load('/audio/voice/'+String(i).padStart(2,'0')+'.ogg').catch(()=>{});},
   sync(state){
-   latest=state;const track=['story','act1'].includes(state.phase)?state.scene?.music:({crossing:'intro',credits:'intro',lineup:'intro',title:'intro'})[state.phase]||null;
+   latest=state;const track=['story','act1','act2'].includes(state.phase)?state.scene?.music:({crossing:'intro',credits:'intro',lineup:'intro',title:'intro'})[state.phase]||null;
    const nextLevel=state.audio?.enabled===false?0:(state.audio?.volume??.45);
    const nextPaused=Boolean(state.paused);
    const breakMusic=state.scene?.musicBreak&&state.scene.elapsedMs>=2000;
