@@ -23,6 +23,6 @@ export function secondScene(ids,cast,choices={}) {
   shot('high-bridge','viaduct',6500,{background:'viaduct',outdoor:true}),
   {id:'castle-question',visual:'castle-question',chapter:2,background:'compartment',speaker:cast[observer],actor:observer,expression:'surprised',text:'Смотрите… Это он?',voiceId:'castle-question-'+observer},
   shot('castle-approach','castle',6000,{background:'viaduct',outdoor:true}),
-  line('welcome-home','Добро пожаловать домой.',13,{actor:null,speaker:'Продавщица · из коридора',visual:'castle',background:'viaduct',outdoor:true}),
  ];
 }
+

@@ -1,6 +1,7 @@
 /* Audio lives only on the shared screen. The room clock drives every cue. */
 window.GameSound=(()=>{
  const music=new Audio();music.loop=true;music.preload='none';
+ music.addEventListener?.('ended',()=>{if(unlocked&&!paused&&desired&&level){music.currentTime=0;play();}});
  const gate=document.querySelector('#sound-gate');
  let unlocked=false,ctx,master,current=null,desired=null,paused=false,level=.45,musicBoost=1,latest;
  let fade,transition,musicJob=0,sceneKey,voiceSource,pendingVoice,playedVoice,pendingCue,playedCue;
@@ -30,6 +31,19 @@ window.GameSound=(()=>{
   if(!unlocked||paused||!level||!ctx||pendingCue===sceneKey||playedCue===sceneKey)return;
   const key=sceneKey;pendingCue=key;
   try{
+   if(scene.cue==='midnight-three'){
+    const elapsed=(scene.elapsedMs||0)/1000;
+    for(let strike=0;strike<3;strike++){
+     const delay=strike*5-elapsed;if(delay<-.25)continue;
+     const start=ctx.currentTime+Math.max(0,delay);
+     for(const [ratio,amp] of [[1,.3],[2.01,.13],[2.76,.07],[4.07,.035]]){
+      const tone=ctx.createOscillator(),gain=ctx.createGain();tone.frequency.value=130.81*ratio;
+      gain.gain.setValueAtTime(.001,start);gain.gain.exponentialRampToValueAtTime(amp,start+.015);gain.gain.exponentialRampToValueAtTime(.001,start+7);
+      tone.connect(gain).connect(master);effects.add(tone);tone.onended=()=>{effects.delete(tone);tone.disconnect();gain.disconnect();};tone.start(start);tone.stop(start+7.1);
+     }
+    }
+    playedCue=key;return;
+   }
    const data=await buffer('/audio/'+scene.cue+'.ogg');
    if(key!==sceneKey||paused||!level)return;
    const offset=(latest.scene.elapsedMs||0)/1000,end=Math.min(data.duration,scene.cueDuration||data.duration);

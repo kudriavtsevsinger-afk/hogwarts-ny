@@ -437,3 +437,7 @@ body[data-phase="act1"] .admin-console{width:min(600px,92%)}
 @media(prefers-reduced-motion:reduce){.hunt-niche.caught::after{animation:none}.chime-pad,.niche-peeves{transition:none}}
 
 svg.chime-symbol{width:52px;height:52px;display:block}.act-tv .chime-pad.lit{transform:none}.act-phone .chime-pad:active:not(:disabled){border-color:var(--chime);box-shadow:inset 0 0 30px #ffffff18}
+
+.act-midnight{position:relative;margin:auto;height:min(65vh,700px);width:min(60vw,700px)}
+
+.filch-actor{object-fit:contain;object-position:bottom;height:88%;max-width:58vw}

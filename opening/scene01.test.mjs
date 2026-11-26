@@ -42,7 +42,7 @@ for(let count=1;count<=6;count++)test(`${count} players: complete automatic prol
    if(action==='wish')assert(!JSON.stringify(await state()).includes('Моё личное желание'));
   }
  }
- assert.deepEqual(seen,sceneSequence(ids,cast).map(s=>s.id));assert.deepEqual(spoken,Array.from({length:43},(_,i)=>i+1));assert.equal((await state()).scene.id,'prologue-end');
+ assert.deepEqual(seen,sceneSequence(ids,cast).map(s=>s.id));assert.deepEqual(spoken,Array.from({length:43},(_,i)=>i+1).filter(n=>n!==13));assert.equal((await state()).scene.id,'prologue-end');
  for(const id of ids){const p=await state(id);assert.equal(p.profile.wish,'Моё личное желание '+id);assert(p.sceneEnded);}
  const oldRun=room.run;await call('restart','oleg',{});assert.notEqual(room.run,oldRun);assert.equal(room.wishes,undefined);assert.equal((await state('oleg')).player.next,0);
  }finally{Date.now=clock;}
@@ -71,3 +71,5 @@ test('finale follows voices 40, clock, 41, 42, 43, then darkness and title',()=>
  assert.equal(end[4].voice.url,'/audio/voice/41.ogg');assert.equal(end[5].actor,'mcgonagall');assert.equal(end[6].voice.url,'/audio/voice/43.ogg');
  for(const s of end.slice(3))assert.equal(s.music,null);assert.equal(end.at(-1).end,true);
 });
+
+test('Filch appears with meow and remains for conductor response',()=>{const seq=sceneSequence(['oleg'],cast);assert.equal(seq.find(s=>s.id==='cat-reaction').actor,'filch');assert.equal(seq.find(s=>s.id==='conductor-filch').actor,'filch');assert(!seq.some(s=>s.id==='welcome-home'));});

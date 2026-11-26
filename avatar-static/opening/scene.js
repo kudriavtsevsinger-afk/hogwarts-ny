@@ -26,6 +26,7 @@ window.PrologueScene = (() => {
       const n=el('div','story-actor full-body-npc');n.dataset.npc=id;n.style.backgroundImage='url('+castle+id+'.webp)';n.style.backgroundPosition=((frames[id][expression]??0)*50)+'% 0';n.setAttribute('role','img');n.setAttribute('aria-label',name||id);return n;
     }
     if(id==='portrait')return img('/art/act1/painting-2.webp',name,'story-actor');
+    if(id==='filch')return img(castle+'filch.png',name||'Филч с кошкой','story-actor filch-actor');
     if(id==='peeves')return img(castle+'peeves.webp',name,'story-actor peeves-actor');
     const npc=['caretaker','conductor'].includes(id);
     if(id==='vendor')return img(art2+'vendor.webp',name,'story-actor vendor-actor');
@@ -176,6 +177,7 @@ window.PrologueScene = (() => {
   return {render,sync,release(){for(const ghost of ghosts)ghost.remove();ghosts.clear();if(stage){for(const a of stage.getAnimations({subtree:true}))a.cancel();stage.remove();}stage=null;active=null;previous=null;},preload(){
     if(preloaded)return;preloaded=true;
     for(const name of ['wall','platform','trolley','conductor','caretaker','carriage-door','carriage-window']){const im=new Image();im.src=art+name+'.webp';}
+    {const im=new Image();im.src=castle+'filch.png';}
     for(const name of ['lake','vestibule','great-hall','mcgonagall','hagrid','dumbledore','peeves','clock','feast-table','feast-guests','feast-candles','feast-desserts','feast-goblets','feast-ornaments','feast-flames','feast-exterior']){const im=new Image();im.src=castle+name+'.webp';}
     for(const id of ['oleg','vanya','sima','amina','masha','liza']){const im=new Image();im.src='/art/players/'+id+'.webp';}
     for(const name of ['compartment','vendor','viaduct','sweets']){const im=new Image();im.src=art2+name+'.webp';}

@@ -85,7 +85,7 @@ window.ActOne=(()=>{
  else if(a.kind==='note'){main.append(el('div','peeves-note'));makeShop(main);}
  else if(a.kind==='ready'){if(a.id==='act-result')main.append(el('div','act-seal','I / V'));if(a.id==='act-result')main.append(el('p','act-summary'));makeReady(main,a.id==='act-result'?'Завершить акт':'Готов');}
  else if(a.kind==='chest'){main.append(el('p','act-instruction','Сундук открыт. Внутри: ключ от механизма башни.'));main.append(image('/art/act1/props/chest.webp','Открытый сундук с ключом','chest-art'));}
- else if(a.kind==='bell'){main.append(image('/art/castle/clock.webp','Часы','act-clock'));}
+ else if(a.kind==='bell'){const clock=el('div','midnight-clock act-midnight');clock.setAttribute('aria-label','Часы остановились на 23:59');clock.append(image('/art/castle/clock.webp','','clock-art'));const dial=el('div','clock-dial');dial.append(el('span','clock-time','23:59'),el('i','hour-hand'),el('i','minute-hand'),el('i','clock-pin'));clock.append(dial);main.append(clock);}
  }
  function update(){updateInventory();if(!root||!current||!root.isConnected)return;const a=current.act;
  root.querySelector('.act-heading').textContent=['title','end'].includes(a.kind)?'':a.title||'';
