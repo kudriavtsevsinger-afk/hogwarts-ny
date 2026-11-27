@@ -51,7 +51,7 @@ window.ActOne=(()=>{
    const close=el('button','act-button quiet','Закрыть');close.type='button';close.onclick=()=>{pouchSelected=null;updateInventory();};detail.append(close);pouch.append(detail);
   }
  }
- function makeHunt(parent){const stats=el('div','act-stats');stat(stats,'Осталось','1:00','hunt-time');stat(stats,'Поимки','0','hunt-hits');stat(stats,'Промахи','0','hunt-misses');parent.append(stats);const cells=el('div','hunt-niches');for(const slot of current.act.hunt.slots){const n=el(hostMode?'div':'button','hunt-niche');n.dataset.cell=slot.index;if(!hostMode){n.type='button';n.onclick=()=>{const h=current.act.hunt,c=h.config,t=current.act.elapsedMs+(current.paused?0:performance.now()-receivedAt)-c.lead,spawn=Math.floor(t/c.interval),token=slot.owner+':'+spawn;if(t>=0&&h.schedule[spawn]?.includes(slot.index)&&t%c.interval<c.visible&&!localHits.has(token)){localHits.add(token);n.classList.remove('visible');n.classList.add('caught');navigator.vibrate?.(25);}void action('tap',{cell:slot.index,spawn});};}n.setAttribute('aria-label','Ниша '+(slot.index+1));n.append(image('/art/act1/props/niche.webp','','niche-art'),el('span','niche-number',slot.index+1),image('/art/castle/peeves.webp','Пивз','niche-peeves'),el('span','niche-owner',hostMode?name(slot.owner):'Твоя ниша'));cells.append(n);}parent.append(cells);}
+ function makeHunt(parent){const stats=el('div','act-stats');stat(stats,'Осталось','1:00','hunt-time');stat(stats,'Поимки','0','hunt-hits');stat(stats,'Промахи','0','hunt-misses');parent.append(stats);const cells=el('div','hunt-niches');for(const slot of current.act.hunt.slots){const n=el(hostMode?'div':'button','hunt-niche');n.dataset.cell=slot.index;if(!hostMode){n.type='button';n.onclick=()=>{const c=current.act.hunt.config,t=current.act.elapsedMs+(current.paused?0:performance.now()-receivedAt)-c.lead;void action('tap',{cell:slot.index,spawn:Math.floor(t/c.interval)});};}n.setAttribute('aria-label','Ниша '+(slot.index+1));n.append(image('/art/act1/props/niche.webp','','niche-art'),el('span','niche-number',slot.index+1),...(hostMode?[image('/art/castle/peeves.webp','Пивз','niche-peeves')]:[]),el('span','niche-owner',hostMode?name(slot.owner):'Твоя ниша'));cells.append(n);}parent.append(cells);}
  function makePortraits(parent){
   const a=current.act;
   if(hostMode){const wall=el('div','portrait-wall');for(const p of a.paintings){const card=el('figure','puzzle-portrait');card.dataset.painting=p.index;card.append(image(p.image,'Картина '+(p.index+1)),el('span','painting-number','Картина '+(p.index+1)),el('span','painting-letter'));wall.append(card);}parent.append(wall);}
@@ -102,7 +102,7 @@ window.ActOne=(()=>{
  if(a.hunt){
   const h=a.hunt,c=h.config,t=a.elapsedMs+(current.paused?0:performance.now()-receivedAt)-c.lead,spawn=Math.floor(t/c.interval);
   root.querySelector('.hunt-time strong').textContent=t<0?'Старт через '+Math.ceil(-t/1000):clock(localRemaining(h.remainingMs));root.querySelector('.hunt-hits strong').textContent=h.hits+' / '+h.goal;root.querySelector('.hunt-misses strong').textContent=h.misses;
-  for(const cell of root.querySelectorAll('.hunt-niche')){const slot=h.slots.find(s=>s.index===Number(cell.dataset.cell)),token=slot.owner+':'+spawn,on=t>=0&&spawn<c.turns&&t%c.interval<c.visible&&h.schedule[spawn]?.includes(slot.index)&&!h.hitTokens.includes(token)&&!localHits.has(token);cell.classList.toggle('visible',Boolean(on));cell.classList.toggle('caught',t>=0&&t%c.interval<c.visible&&(h.hitTokens.includes(token)||localHits.has(token)));cell.setAttribute('aria-label','Арка '+(slot.index+1)+(on?' — Пивз здесь':''));}
+  for(const cell of root.querySelectorAll('.hunt-niche')){const slot=h.slots.find(s=>s.index===Number(cell.dataset.cell)),token=slot.owner+':'+spawn,on=hostMode&&t>=0&&spawn<c.turns&&t%c.interval<c.visible&&h.schedule?.[spawn]?.includes(slot.index)&&!h.hitTokens.includes(token)&&!localHits.has(token);cell.classList.toggle('visible',Boolean(on));cell.classList.toggle('caught',hostMode&&t>=0&&t%c.interval<c.visible&&(h.hitTokens.includes(token)||localHits.has(token)));cell.setAttribute('aria-label','Арка '+(slot.index+1)+(on?' — Пивз здесь':''));}
  }
  if(a.paintings){
   for(const tile of root.querySelectorAll('.puzzle-portrait')){const p=a.paintings.find(p=>p.index===Number(tile.dataset.painting));tile.classList.toggle('solved',p.solved);tile.querySelector('.painting-letter').textContent=p.letter;}
@@ -117,7 +117,7 @@ window.ActOne=(()=>{
   root.querySelector('.chime-round strong').textContent=g.round+' / 6';root.querySelector('.chime-time strong').textContent=g.mode==='show'?'Слушаем':clock(localRemaining(g.remainingMs));
   const labels={show:'Смотрите и запоминайте',input:'Теперь ваша очередь',success:g.round===6?'Колокол пробуждён':'Верно. Звон становится длиннее',retry:'Попробуем ещё раз'};
   root.querySelector('.chime-status').textContent=labels[g.mode];root.querySelector('.chime-help').textContent=g.mode==='input'?'Повторите последовательность по порядку. На телефоне каждый нажимает свои.':g.mode==='retry'?'Та же последовательность прозвучит снова. Монеты остаются у команды.':g.mode==='show'?'Запомните порядок. Нажимать пока не нужно.':'Вы звучите вместе.';
-  for(const b of root.querySelectorAll('.chime-pad')){const i=Number(b.dataset.pad);b.classList.toggle('lit',Boolean(flash===i||g.mode==='input'&&g.last?.correct&&g.last.pad===i&&g.last.ageMs+performance.now()-receivedAt<650));b.classList.toggle('hinted',g.mode==='input'&&g.hint===i);if(!hostMode)b.disabled ||=g.mode!=='input';}
+  for(const b of root.querySelectorAll('.chime-pad')){const i=Number(b.dataset.pad);b.classList.toggle('lit',Boolean(hostMode&&(flash===i||g.mode==='input'&&g.last?.correct&&g.last.pad===i&&g.last.ageMs+performance.now()-receivedAt<650)));b.classList.toggle('hinted',hostMode&&g.mode==='input'&&g.hint===i);if(!hostMode)b.disabled ||=g.mode!=='input';}
   const beats=root.querySelector('.chime-beats');if(beats.children.length!==g.length){beats.replaceChildren();for(let i=0;i<g.length;i++)beats.append(el('span'));}for(let i=0;i<g.length;i++)beats.children[i].className=i<g.position?'done':i===g.position?'next':'';
   for(const b of root.querySelectorAll('.chime-actions button'))b.disabled ||=g.mode!=='input'||Boolean(a.vote);const hint=root.querySelector('.chime-hint');if(hint)hint.disabled ||=g.hint!==null;
  }
@@ -140,29 +140,78 @@ setInterval(()=>window.ActOne.tick(),100);
 window.ActTwo=(()=>{
  let signature='',draft='',busy=false;
  const el=(t,c,text)=>{const e=document.createElement(t);e.className=c||'';if(text!=null)e.textContent=text;return e;};
- return {render(state,parent,host,send){const a=state.act2;const stable={...a,remaining:0,locked:!!a.locked};const sig=JSON.stringify([stable,host,state.paused]);if(signature===sig&&parent.querySelector('.act-two')){parent.querySelectorAll('.a2-timer').forEach(e=>e.textContent=Math.ceil(a.remaining/1000)+' с');return;}signature=sig;window.PrologueScene?.release?.();const root=el('section','act-two '+(host?'a2-display':'a2-phone'));root.dataset.kind=a.kind;root.dataset.scene=a.id;
+ const img=(src,alt,cls)=>{const e=el('img',cls);e.src=src;e.alt=alt||'';e.draggable=false;return e;};
+ const art='/art/act2/';
+ const plants=['wormwood','bubotuber','mandrake','asphodel','gillyweed','valerian'];
+ const names=['Полынь','Бубонтюбер','Мандрагора','Асфодель','Жабросли','Валериана'];
+ const itemArt=id=>id==='watch'?'/art/act1/props/watch.webp':art+id+'.webp';
+ const itemHelp={shield:'Гасит одну трещину котла.',glasses:'Показывает номера нужных листов в одном раунде.',watch:'Добавляет 30 секунд к раунду.'};
+ function timer(a){return a.kind==='mirror'&&a.mode==='reveal'?'':Math.ceil(a.remaining/1000)+' с';}
+ return {render(state,parent,host,send){
+ const a=state.act2,stable={...a,remaining:0,locked:!!a.locked};
+ const sig=JSON.stringify([stable,host,state.paused]);
+ if(signature===sig&&parent.querySelector('.act-two')){parent.querySelectorAll('.a2-timer').forEach(e=>e.textContent=timer(a));return;}
+ signature=sig;window.PrologueScene?.release?.();
+ document.querySelector('#team-inventory')?.remove();document.body.classList.remove('has-inventory');
+ const root=el('section','act-two '+(host?'a2-display':'a2-phone'));root.dataset.kind=a.kind;root.dataset.scene=a.id;
  const call=async(type,data={})=>{if(busy||state.paused)return;busy=true;try{await send({type,key:a.key,nonce:crypto.randomUUID(),...data});}catch(e){window.GameNotice?.show(e.message);}finally{busy=false;}};
- const btn=(to,label,type,data={})=>{const b=el('button','act-button',label);b.disabled=state.paused;b.onclick=()=>call(type,typeof data==='function'?data():data);to.append(b);return b;};
- const imageSprout=()=>{const img=el('img','a2-sprout');img.src='/art/act2/sprout.webp';img.alt='Профессор Спраут';return img;};
- const stage=el('div','a2-stage');const copy=el('div','a2-copy');copy.append(el('p','a2-eyebrow',a.speaker||'Зимняя теплица'),el('h1','',a.text));root.append(stage,copy);
- if(!host&&['line','vision','flower','end'].includes(a.kind)){copy.replaceChildren(el('h1','','Зимняя теплица'),el('p','','Смотри на общий экран.'));parent.replaceChildren(root);return;}
- if(host&&a.speaker==='Профессор Спраут')stage.append(imageSprout());
- if(host&&a.kind==='line'&&['Дамблдор','Продавщица'].includes(a.speaker)){const actor=el('div','a2-speaker');if(a.speaker==='Дамблдор'){actor.style.backgroundImage='url(/art/castle/dumbledore.webp)';actor.style.backgroundSize='300% 100%';}else{actor.style.backgroundImage='url(/art/scene-02/vendor.webp)';actor.style.backgroundSize='contain';}stage.append(actor);}
- if(a.remaining>0&&!['line','vision','flower'].includes(a.kind))copy.append(el('p','a2-timer',Math.ceil(a.remaining/1000)+' с'));
+ const btn=(to,label,type,data={},cls='')=>{const b=el('button','act-button '+cls,label);b.type='button';b.disabled=state.paused;b.onclick=()=>call(type,typeof data==='function'?data():data);to.append(b);return b;};
+ const stage=el('div','a2-stage'),copy=el('div','a2-copy');root.append(stage,copy);
+ const title=a.speaker||({mirror:`Желание ${a.round} из ${a.totalRounds}`,consent:'Еиналеж',choice:'Твой выбор',herb:'Гербарий Спраут',pot:'Эликсир Спраут'}[a.kind])||a.text;
+ copy.append(el('h1','speaker-name',title));
+ if(a.speaker&&a.text)copy.append(el('p','spoken-line',a.text));
+ if(!host&&['line','vision','flower','end'].includes(a.kind)){copy.replaceChildren(el('h1','speaker-name','Зимняя теплица'),el('p','','Смотри на общий экран.'));parent.replaceChildren(root);return;}
+ if(host&&a.speaker==='Профессор Спраут')stage.append(img(art+'sprout.webp',a.speaker,'a2-sprout'));
+ if(host&&a.kind==='line'&&a.speaker==='Дамблдор'){const actor=el('div','a2-speaker a2-dumbledore');actor.setAttribute('role','img');actor.setAttribute('aria-label','Дамблдор');stage.append(actor);}
+ if(host&&a.kind==='line'&&a.speaker==='Продавщица')stage.append(img('/art/scene-02/vendor.webp',a.speaker,'a2-sprout'));
+ const mirrorShot=['mirror','consent','choice'].includes(a.kind)||['vision','reflection'].includes(a.id);
+ if(host&&mirrorShot){
+ const scene=el('div','a2-mirror-shot');scene.append(img(art+'mirror.webp','','a2-mirror-backdrop'));
+ if(a.id==='vision'){const reflection=el('div','a2-reflection');reflection.append(img(art+'vision.webp','Забытый зелёный шарф в купе. За окном платформа.',''));scene.append(reflection);}
+ else if(a.kind==='mirror'||a.kind==='consent'){scene.append(el('div','a2-mirror',a.kind==='consent'?'ЕИНАЛЕЖ':a.text));}
+ stage.append(scene);
+ }
+ if(a.remaining>0&&!['line','vision','flower'].includes(a.kind))copy.append(el('p','a2-timer',timer(a)));
  if(a.message)copy.append(el('p','',a.message));
  if(['ready','shop'].includes(a.kind)){copy.append(el('p','',`Готовы: ${a.ready}/${a.total}`));if(!host)btn(copy,'Готов','ready');}
- if(a.kind==='shop')for(const item of a.items){const card=el('div','a2-item');card.append(el('strong','',item.name),el('span','',item.cost+' мон.'));if(!host)btn(card,'Купить','propose',{target:item.id});stage.append(card);}
- if(a.kind==='consent'){stage.append(el('div','a2-mirror','ЕИНАЛЕЖ'));copy.append(el('p','','Показать твоё желание из пролога анонимно? Без ответа оно останется в тайне.'));if(!host&&!a.answered){btn(copy,'Показать','consent',{yes:true});btn(copy,'Оставить в тайне','consent',{yes:false});}}
- if(a.kind==='mirror'){if(host)stage.append(el('div','a2-mirror',a.text));copy.querySelector('h1').textContent=`Желание ${a.round} из ${a.totalRounds}`;if(a.result)copy.append(el('p','a2-reveal',(a.result.correct?'Верно! ':'')+a.result.name));else if(!host){if(a.own)copy.append(el('p','','Это твоё. Молчи и наблюдай.'));else if(a.mode==='guess'&&!a.voted)for(const o of a.options)btn(copy,o.name,'guess',{answer:o.id});else copy.append(el('p','','Ждём остальных…'));}}
- if(a.kind==='choice'){copy.append(el('p','','Это личный выбор. Другие его не увидят.'));if(!host&&!a.answered)for(const [choice,label]of [['release','Отпустить'],['keep','Сохранить'],['share','Поделиться']])btn(copy,label,'choice',{choice});}
- if(a.kind==='vision'&&a.id==='vision'){const scarf=el('div','a2-scarf');scarf.append(el('span','','23:59'));stage.append(scarf);}
- if(a.kind==='herb'){copy.append(el('p','','Разложите карточки на столе и введите номера растений слева направо.'),el('p','',a.nudge));if(a.hints.length)copy.append(el('p','','Начало полки: '+a.hints.join(' → ')));if(!host){const input=el('input','a2-code');input.inputMode='numeric';input.maxLength=6;input.placeholder='Код шкафчика';input.value=draft;input.oninput=()=>{draft=input.value.replace(/\D/g,'').slice(0,6);input.value=draft;};input.disabled=!!a.locked;copy.append(input);btn(copy,a.locked?'Замок отдыхает 20 секунд':'Открыть','code',()=>({code:draft})).disabled=!!a.locked||state.paused;if(a.hints.length<3)btn(copy,'Нужна помощь · 1 мон.','propose',{target:'herbHint'});}}
- if(a.sheets){const sheets=el('div','a2-sheets');for(const s of a.sheets){const sheet=el('article','a2-sheet');sheet.append(el('h3','',`${s.id}. ${s.name}`),el('p','',s.text));sheets.append(sheet);}stage.append(sheets);}
- if(a.kind==='pot'){const p=a.pot,colors=['Синий','Зелёный','Красный','Жёлтый'];const pot=el('div','a2-cauldron');pot.style.setProperty('--brew',['#3581bb','#419971','#b4473d','#e4bc45'][p.color]);pot.append(el('div','a2-brew'),el('strong','',colors[p.color]));if(!host)stage.append(pot);copy.append(el('p','',`Раунд ${p.round}/5 · Пар: ${['нет','лёгкий','густой'][p.steam]} · Пузыри: ${['редкие','частые','кипит'][p.bubbles]}`),el('p','',`${p.frost?'❄ Иней ':''}${p.glow?'✧ Свечение ':''}Трещины: ${p.cracks}/3`),el('p','','Добавлено: '+p.added.map(i=>['Полынь','Бубонтюбер','Мандрагора','Асфодель','Жабросли','Валериана'][i]).join(' → ')));
- if(a.hint)copy.append(el('p','a2-reveal','Следующий ингредиент: '+a.hint));if(a.rescue)copy.append(el('p','a2-reveal','Спраут помогает: '+a.rescue.join(' → ')));if(a.revealSheets.length)copy.append(el('p','','Нужные листы: '+a.revealSheets.join(', ')));if(a.mode!=='input')copy.append(el('p','a2-reveal',a.mode==='success'?'Получилось!':'Котёл остыл. Попробуем снова.'));if(!host&&a.mode==='input'){for(const b of a.buttons)btn(copy,b.name,'ingredient',{ingredient:b.id,version:a.version});btn(copy,'Подсказка · 1 мон.','propose',{target:'potHint'});}}
+ if(a.kind==='shop'){const shelf=el('div','a2-shop');for(const item of a.items){const card=el('article','a2-item');card.append(img(itemArt(item.id),item.name,'a2-item-art'),el('h2','',item.name),el('p','',itemHelp[item.id]),el('span','item-price',item.cost+' мон.'));if(!host)btn(card,'Предложить покупку','propose',{target:item.id});shelf.append(card);}stage.append(shelf);}
+ if(a.kind==='consent'){copy.append(el('p','',host?'Реши на телефоне, готов ли ты показать своё желание.':'Показать твоё желание из пролога анонимно? Без ответа оно останется в тайне.'));if(!host&&!a.answered){btn(copy,'Показать','consent',{yes:true});btn(copy,'Оставить в тайне','consent',{yes:false});}}
+ if(a.kind==='mirror'){
+ if(a.result)copy.append(el('p','a2-reveal',(a.result.correct?'Верно! ':'')+a.result.name));
+ else if(host)copy.append(el('p','',a.mode==='tie'?'Голоса разделились. Последнее слово за старостой.':`Голоса: ${a.votesCast}/${a.voters}`));
+ else if(a.own)copy.append(el('p','','Это твоё. Молчи и наблюдай.'));
+ else if(a.mode==='guess'&&!a.voted){const choices=el('div','a2-choices');for(const o of a.options)btn(choices,o.name,'guess',{answer:o.id});copy.append(choices);}
+ else copy.append(el('p','','Голос принят. Смотри на общий экран.'));
+ }
+ if(a.kind==='choice'){copy.append(el('p','',host?'Сделай личный выбор на телефоне.':'Что ты сделаешь со своим желанием? Другие не увидят твой выбор.'));if(!host&&!a.answered)for(const [choice,label]of [['release','Отпустить'],['keep','Сохранить'],['share','Поделиться']])btn(copy,label,'choice',{choice});}
+ if(a.kind==='herb'){
+ copy.append(el('p','','Разложите карточки на столе и введите номера растений слева направо.'),el('p','',a.nudge));
+ if(a.hints.length)copy.append(el('p','a2-reveal','Начало полки: '+a.hints.join(' → ')));
+ if(!host){const form=el('form','a2-code-form'),input=el('input','a2-code');input.inputMode='numeric';input.maxLength=6;input.placeholder='Код шкафчика';input.setAttribute('aria-label','Код шкафчика');input.value=draft;input.oninput=()=>{draft=input.value.replace(/\D/g,'').slice(0,6);input.value=draft;};input.disabled=!!a.locked;form.onsubmit=e=>{e.preventDefault();if(!a.locked)call('code',{code:draft});};form.append(input);btn(form,a.locked?'Замок отдыхает 20 секунд':'Открыть','code',()=>({code:draft})).disabled=!!a.locked||state.paused;copy.append(form);if(a.hints.length<3)btn(copy,'Нужна помощь · 1 мон.','propose',{target:'herbHint'});}
+ }
+ if(a.sheets){const sheets=el('div','a2-sheets');for(const s of a.sheets){const sheet=el('details','a2-sheet');sheet.open=a.id==='pot-ready';sheet.append(el('summary','',`${s.id}. ${s.name}`),el('p','',s.text));sheets.append(sheet);}stage.append(sheets);}
+ if(a.kind==='pot'){
+ const p=a.pot,colors=['Синий','Зелёный','Красный','Жёлтый'];
+ if(host){const pot=el('div','a2-cauldron-art');pot.dataset.steam=p.steam;pot.dataset.bubbles=p.bubbles;pot.dataset.frost=!!p.frost;pot.dataset.glow=!!p.glow;
+ pot.append(img(art+'potion-'+['blue','green','red','yellow'][p.color]+'.webp',colors[p.color]+' эликсир','a2-pot-image'));
+ const steam=el('div','a2-steam');for(let i=0;i<5;i++){const puff=el('i');puff.style.setProperty('--i',i);steam.append(puff);}pot.append(steam);
+ const bubbles=el('div','a2-bubbles');for(let i=0;i<[3,8,15][p.bubbles];i++){const b=el('i');b.style.setProperty('--i',i);bubbles.append(b);}pot.append(bubbles,el('div','a2-frost'));stage.append(pot);
+ }
+ copy.append(el('p','a2-pot-state',`Раунд ${p.round}/5 · ${colors[p.color]} · Пар: ${['нет','лёгкий','густой'][p.steam]} · Пузыри: ${['редкие','частые','кипит'][p.bubbles]}`),el('p','',`${p.frost?'Иней · ':''}${p.glow?'Свечение · ':''}Трещины: ${p.cracks}/3`));
+ if(p.added.length)copy.append(el('p','a2-added','Добавлено: '+p.added.map(i=>names[i]).join(' → ')));
+ if(a.hint)copy.append(el('p','a2-reveal','Следующий ингредиент: '+a.hint));if(a.rescue)copy.append(el('p','a2-reveal','Спраут помогает: '+a.rescue.join(' → ')));if(a.revealSheets.length)copy.append(el('p','','Нужные листы: '+a.revealSheets.join(', ')));
+ if(a.mode!=='input')copy.append(el('p','a2-reveal',a.mode==='success'?'Получилось!':'Котёл остыл. Попробуем снова.'));
+ if(!host&&a.mode==='input'){const ingredients=el('div','a2-ingredients');for(const b of a.buttons){const button=btn(ingredients,'','ingredient',{ingredient:b.id,version:a.version},'a2-ingredient');button.append(img(art+'plant-'+plants[b.id]+'.webp','',''),el('span','',b.name));}copy.append(ingredients);btn(copy,'Подсказка · 1 мон.','propose',{target:'potHint'});}
+ }
  if(a.kind==='flower')stage.append(el('div','a2-flower','✧'));
- if(a.inventory.length){const bag=el('aside','a2-inventory');bag.append(el('strong','','С собой'));for(const i of a.inventory){bag.append(el('span','',i.name));if(!host&&a.kind==='pot'&&a.mode==='input')btn(bag,'Применить','use',{item:i.id});}root.append(bag);}
- if(!host&&a.ability){const b=el('aside','a2-ability');b.append(el('strong','',a.ability.name),el('p','',a.ability.desc));if(a.tie){for(const id of a.tie)btn(b,a.options.find(o=>o.id===id)?.name||id,'ability',{answer:id});}else if(a.ability.id==='maker_touch'){const confirm=el('details');confirm.append(el('summary','','Применить способность'));confirm.append(el('p','','Это сменит рецепт в текущем раунде. Уже добавленные ингредиенты сбросятся.'));btn(confirm,'Да, сменить рецепт','ability',{confirm:true});b.append(confirm);}else btn(b,'Применить','ability');root.append(b);}
- if(a.vote){const vote=el('aside','a2-vote');vote.append(el('strong','',`Общая покупка · ${a.vote.cost} мон.`),el('p','',`За: ${a.vote.yes}, против: ${a.vote.no}`));if(!host&&!a.vote.voted){btn(vote,'За','vote',{voteId:a.vote.id,yes:true});btn(vote,'Против','vote',{voteId:a.vote.id,yes:false});}root.append(vote);}parent.replaceChildren(root);
+ if(a.inventory.length){const bag=el(host?'aside':'details','a2-inventory');bag.append(el(host?'strong':'summary','','Артефакты команды · '+a.inventory.length));for(const i of a.inventory){const slot=el('div','a2-inventory-slot');slot.append(img(itemArt(i.id),'',''),el('span','',i.name));if(!host&&a.kind==='pot'&&a.mode==='input')btn(slot,'Применить','use',{item:i.id});bag.append(slot);}root.append(bag);}
+ if(!host&&a.ability){const b=el('details','a2-ability');b.append(el('summary','',a.ability.name),el('p','',a.ability.desc));if(a.tie){b.open=true;for(const id of a.tie)btn(b,a.options.find(o=>o.id===id)?.name||id,'ability',{answer:id});}else if(a.ability.id==='maker_touch'){b.append(el('p','','Это сменит рецепт в текущем раунде. Уже добавленные ингредиенты сбросятся.'));btn(b,'Подтверждаю: сменить рецепт','ability',{confirm:true});}else btn(b,'Применить','ability');root.append(b);}
+ if(a.vote){const vote=el('aside','a2-vote');vote.append(el('strong','',`Общая покупка · ${a.vote.cost} мон.`),el('p','',`За: ${a.vote.yes}, против: ${a.vote.no}`));if(!host&&!a.vote.voted){btn(vote,'За','vote',{voteId:a.vote.id,yes:true});btn(vote,'Против','vote',{voteId:a.vote.id,yes:false});}root.append(vote);}
+ // Preserve focused code entry and expanded sheets across room polling.
+ const focused=parent.querySelector('.a2-code')===document.activeElement;
+ const expanded=[...parent.querySelectorAll('details[open]')].map(d=>d.querySelector('summary')?.textContent);
+ const oldKey=parent.querySelector('.act-two')?.dataset.key;root.dataset.key=a.key;
+ if(oldKey===a.key)for(const d of root.querySelectorAll('details'))if(expanded.includes(d.querySelector('summary')?.textContent))d.open=true;
+ parent.replaceChildren(root);if(focused&&oldKey===a.key)root.querySelector('.a2-code')?.focus();
  }};
 })();

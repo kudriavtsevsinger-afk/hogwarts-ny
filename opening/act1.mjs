@@ -138,7 +138,7 @@ export function act1View(room,cast,playerId,host,now=Date.now()){
  if(['shop','note'].includes(step.kind))v.items=ITEMS.filter(x=>step.kind==='shop'||x.id==='note');
  if(['note','portraits'].includes(step.kind)){v.note=a.used.note?NOTE:null;if(a.noteReadAt!=null)v.noteReadingMs=Math.max(0,14000-(time-a.noteReadAt));}
  if(step.kind==='hunt'){
-  const h=a.hunt,cols=room.lineup.length;v.hunt={config:HUNT,remainingMs:Math.max(0,huntDuration-elapsed),hits:h.hits.length,misses:h.misses,goal:8,bonus:10,hitTokens:h.hits,schedule:h.schedule.map(row=>host?row:row.filter((_,i)=>room.lineup[i]===playerId)),slots:room.lineup.flatMap((id,i)=>Array.from({length:3},(_,j)=>({index:i*3+j,owner:id}))).filter(x=>host||x.owner===playerId)};
+  const h=a.hunt,cols=room.lineup.length;v.hunt={config:HUNT,remainingMs:Math.max(0,huntDuration-elapsed),hits:h.hits.length,misses:h.misses,goal:8,bonus:10,hitTokens:h.hits,schedule:host?h.schedule:null,slots:room.lineup.flatMap((id,i)=>Array.from({length:3},(_,j)=>({index:i*3+j,owner:id}))).filter(x=>host||x.owner===playerId)};
  }
  if(step.kind==='portraits'){
   const own=currentPainting(room,playerId);v.assignment=own;v.letters=PAINTINGS.map((p,i)=>a.solved.includes(i)?p[2]:'');v.solvedCount=a.solved.length;
@@ -146,7 +146,7 @@ export function act1View(room,cast,playerId,host,now=Date.now()){
   v.feedback=a.feedback&&time-a.feedback.at<3500?{...a.feedback,remainingMs:3500-(time-a.feedback.at)}:null;v.talked=Boolean(a.talked);
  }
  if(step.kind==='chimes'){
-  const g=a.chimes;v.chimes={round:g.round,total:6,length:g.sequence.length,mode:g.mode,modeElapsed:time-g.modeAt,position:g.position,version:g.version,mistakes:g.mistakes,replays:g.replays,remainingMs:Math.max(0,g.deadline-time),sequence:g.mode==='show'?g.sequence:null,hint:g.hint===g.position?g.sequence[g.position]:null,last:g.last?{...g.last,ageMs:time-g.last.at}:null,pads:CHIMES.map((c,i)=>({...c,index:i,owner:room.lineup[i%room.lineup.length]})).filter(c=>host||c.owner===playerId)};
+  const g=a.chimes;v.chimes={round:g.round,total:6,length:g.sequence.length,mode:g.mode,modeElapsed:time-g.modeAt,position:g.position,version:g.version,mistakes:g.mistakes,replays:g.replays,remainingMs:Math.max(0,g.deadline-time),sequence:host&&g.mode==='show'?g.sequence:null,hint:host&&g.hint===g.position?g.sequence[g.position]:null,last:host&&g.last?{...g.last,ageMs:time-g.last.at}:null,pads:CHIMES.map((c,i)=>({...c,index:i,owner:room.lineup[i%room.lineup.length]})).filter(c=>host||c.owner===playerId)};
  }
 
  let text=step.text;if(step.id==='peeves-result')text=a.hunt.hits.length>=8?'Ладно. Вот записка. Больше не просите.':'Вы безнадёжны! Записку только за монету, и не просите бесплатно!';

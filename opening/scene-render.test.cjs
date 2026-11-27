@@ -69,3 +69,11 @@ test('Act I handoff releases old cinematic layers and never resurrects a detache
  assert.notEqual(root.children[0],old);assert.equal(root.querySelector('.story-actor'),null);assert.equal(root.querySelector('.chapter-transition'),null);assert.equal(root.querySelector('.outgoing-shot'),null);
  const detached=root.children[0];root.replaceChildren(title);renderer.render({...travel,key:'act:next',background:'tower'},root);assert.notEqual(root.children[0],detached);assert.equal(root.querySelector('.outgoing-shot'),null);
 });
+
+test('meow and offscreen conductor keep the same Filch image mounted',()=>{
+ const {renderer,root}=setup();
+ const s={key:'meow',chapter:1,visual:'dialogue',background:'platform',actor:'filch',cast};
+ renderer.render(s,root);const stage=root.children[0],actor=stage.querySelector('.filch-actor');
+ renderer.render({...s,key:'conductor-filch',speaker:'Проводник · за кадром',text:'Да, мистер Филч, это относится и к вам!'},root);
+ assert.equal(root.children[0],stage);assert.equal(stage.querySelector('.filch-actor'),actor);assert.equal(actor.alt,'Филч с кошкой');
+});

@@ -13,3 +13,15 @@ for(let n=3;n<=6;n++)test(`Act II complete for ${n} players with private wishes 
  }assert(guard<300);assert.equal(r.bank.balance,36);assert.equal(r.flags.strikes,6);assert(ids.every(id=>r.players.get(id).ability.spent));});
 test('failed cauldron attempts unlock rescue and keep recipe server-side',()=>{const ids=['oleg','sima','masha'],r={run:'retry',lineup:ids,players:new Map(ids.map(id=>[id,{id,answers:Array(8).fill(0)}])),bank:createBank()};beginAct2(r,0);r.act2.index=19;r.act2.pot={round:1,color:0,steam:0,bubbles:0,cracks:0,added:[]};r.act2.mode='input';r.act2.deadline=1;for(let i=0;i<6;i++){tickAct2(r,r.act2.deadline);assert.equal(r.act2.mode,'retry');tickAct2(r,r.act2.deadline);assert.equal(r.act2.mode,'input');}assert.equal(r.act2.failures,6);const v=act2View(r,cast,'oleg',true,r.act2.at).act2;assert(v.rescue.length>=2);assert.equal(v.sheets,undefined);});
 test('spectators, stale actions and unaffordable proposals cannot mutate act',()=>{const ids=['oleg','sima','masha'],r={run:'secure',lineup:ids,players:new Map(ids.map(id=>[id,{id,answers:Array(8).fill(0)}])),bank:createBank()};beginAct2(r,0);r.act2.index=6;r.bank.balance=0;const key=act2View(r,cast,'oleg',false,0).act2.key;assert.throws(()=>act2Action(r,null,'ready',{key},0));assert.throws(()=>act2Action(r,r.players.get('oleg'),'propose',{key,target:'shield'},0));assert.equal(r.act2.vote,null);assert.equal(r.bank.balance,0);});
+test('mirror resolves as soon as every eligible player voted, excluding the author',()=>{
+ const ids=['oleg','sima','masha'],r={run:'early',lineup:ids,players:new Map(ids.map(id=>[id,{id,answers:Array(8).fill(0)}])),bank:createBank()};
+ beginAct2(r,0);Object.assign(r.act2,{index:9,cards:[{author:'oleg',text:'Море'}],card:0,mode:'guess',votes:{},removed:{},deadline:25000,correct:0});
+ const call=id=>act2Action(r,r.players.get(id),'guess',{key:act2View(r,cast,id,false,1000).act2.key,answer:'oleg'},1000);
+ call('sima');assert.equal(r.act2.mode,'guess');call('masha');assert.equal(r.act2.mode,'reveal');assert.equal(r.act2.deadline,7000);assert.equal(r.act2.correct,1);
+});
+test('all-voted tie enters leader decision immediately without waiting for guess timer',()=>{
+ const ids=['oleg','sima','masha'],r={run:'tie',lineup:ids,players:new Map(ids.map(id=>[id,{id,answers:Array(8).fill(0)}])),bank:createBank()};beginAct2(r,0);
+ r.players.get('sima').ability={id:'leader_word',act:'act2',spent:false};Object.assign(r.act2,{index:9,cards:[{author:'oleg',text:'Снег'}],card:0,mode:'guess',votes:{},removed:{},deadline:25000,correct:0});
+ for(const [id,answer] of [['sima','oleg'],['masha','decoy']])act2Action(r,r.players.get(id),'guess',{key:act2View(r,cast,id,false,1000).act2.key,answer},1000);
+ assert.equal(r.act2.mode,'tie');assert.equal(r.act2.deadline,16000);assert.equal(r.act2.leader,'sima');
+});

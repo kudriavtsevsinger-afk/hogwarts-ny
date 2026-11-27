@@ -72,4 +72,4 @@ test('finale follows voices 40, clock, 41, 42, 43, then darkness and title',()=>
  for(const s of end.slice(3))assert.equal(s.music,null);assert.equal(end.at(-1).end,true);
 });
 
-test('Filch appears with meow and remains for conductor response',()=>{const seq=sceneSequence(['oleg'],cast);assert.equal(seq.find(s=>s.id==='cat-reaction').actor,'filch');assert.equal(seq.find(s=>s.id==='conductor-filch').actor,'filch');assert(!seq.some(s=>s.id==='welcome-home'));});
+test('Filch appears with meow and remains for conductor response',()=>{const seq=sceneSequence(['oleg'],cast);assert.equal(seq.find(s=>s.id==='cat-reaction').actor,'filch');assert.equal(seq.find(s=>s.id==='conductor-filch').actor,'filch');const meow=seq.find(s=>s.id==='cat-reaction'),response=seq.find(s=>s.id==='conductor-filch');assert.equal(meow.visual,response.visual,'retain the dialogue stage between meow and response');assert.equal(meow.background,response.background);assert.equal(meow.cue,'cat-meow');assert(!seq.some(s=>s.id==='welcome-home'));});

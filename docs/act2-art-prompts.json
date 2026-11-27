@@ -1,0 +1,54 @@
+{
+  "tool": "image_gen",
+  "assets": [
+    {
+      "path": "avatar-static/opening/art/act2/vision.webp",
+      "prompt": "A detailed hand-painted 2D fantasy storybook cinematic illustration, painterly textured brushwork, midnight blue and warm gold palette, Hogwarts Express compartment at winter night, empty worn red velvet seat with a clearly visible forgotten long GREEN wool scarf draped across the seat in the foreground. Through the big window show King's Cross platform amber lamps, snow and an antique station clock. Nostalgic mysterious atmosphere. Vertical 2:3 composition meant to appear inside an oval magic mirror. No people, no writing, no frame. Beautiful detailed art, not 3D."
+    },
+    {
+      "path": "avatar-static/opening/art/act2/potion-blue.webp",
+      "prompt": "Hand-painted 2D fantasy storybook game prop, antique squat black iron cauldron on three small feet, engraved warm brass rim and side handles, filled to brim with clearly blue glowing potion. Slightly elevated view to clearly see liquid. Single cauldron centered completely visible with ample padding. No steam, no bubbles, no ice, no text, no floor, no extra objects. Fine textured painterly shading, midnight blue shadows and antique gold accents, premium Hogwarts illustrated adventure style. Transparent background."
+    },
+    {
+      "path": "avatar-static/opening/art/act2/potion-green.webp",
+      "prompt": "Hand-painted 2D fantasy storybook game prop, antique squat black iron cauldron on three small feet, engraved warm brass rim and side handles, filled to brim with clearly green glowing potion. Slightly elevated view to clearly see liquid. Single cauldron centered completely visible with ample padding. No steam, no bubbles, no ice, no text, no floor, no extra objects. Fine textured painterly shading, midnight blue shadows and antique gold accents, premium Hogwarts illustrated adventure style. Transparent background."
+    },
+    {
+      "path": "avatar-static/opening/art/act2/potion-red.webp",
+      "prompt": "Hand-painted 2D fantasy storybook game prop, antique squat black iron cauldron on three small feet, engraved warm brass rim and side handles, filled to brim with clearly red glowing potion. Slightly elevated view to clearly see liquid. Single cauldron centered completely visible with ample padding. No steam, no bubbles, no ice, no text, no floor, no extra objects. Fine textured painterly shading, midnight blue shadows and antique gold accents, premium Hogwarts illustrated adventure style. Transparent background."
+    },
+    {
+      "path": "avatar-static/opening/art/act2/potion-yellow.webp",
+      "prompt": "Hand-painted 2D fantasy storybook game prop, antique squat black iron cauldron on three small feet, engraved warm brass rim and side handles, filled to brim with clearly yellow glowing potion. Slightly elevated view to clearly see liquid. Single cauldron centered completely visible with ample padding. No steam, no bubbles, no ice, no text, no floor, no extra objects. Fine textured painterly shading, midnight blue shadows and antique gold accents, premium Hogwarts illustrated adventure style. Transparent background."
+    },
+    {
+      "path": "avatar-static/opening/art/act2/plant-wormwood.webp",
+      "prompt": "Hand-painted botanical plate for an antique Hogwarts herbarium, wormwood plant with silvery deeply divided feathery leaves and tiny yellow flower clusters, entire specimen in a small aged terracotta pot (glass jar for waterweed), centered full silhouette with generous margins, detailed natural colors and fine watercolor/gouache textures, warm gold reflected light, accurate distinctive silhouette. Isolated on transparent background, no text, no labels, no border, no numbers. 2D illustrated fantasy game asset, beautiful readable at card size."
+    },
+    {
+      "path": "avatar-static/opening/art/act2/plant-bubotuber.webp",
+      "prompt": "Hand-painted botanical plate for an antique Hogwarts herbarium, magical bubotuber, thick dark green slug-shaped upright tuber covered in glossy yellow pustules, small curled green leaves, entire specimen in a small aged terracotta pot (glass jar for waterweed), centered full silhouette with generous margins, detailed natural colors and fine watercolor/gouache textures, warm gold reflected light, accurate distinctive silhouette. Isolated on transparent background, no text, no labels, no border, no numbers. 2D illustrated fantasy game asset, beautiful readable at card size."
+    },
+    {
+      "path": "avatar-static/opening/art/act2/plant-mandrake.webp",
+      "prompt": "Hand-painted botanical plate for an antique Hogwarts herbarium, magical mandrake root with expressive wrinkled humanoid root face and branching root arms, crown of lush green leaves, friendly grumpy expression, entire specimen in a small aged terracotta pot (glass jar for waterweed), centered full silhouette with generous margins, detailed natural colors and fine watercolor/gouache textures, warm gold reflected light, accurate distinctive silhouette. Isolated on transparent background, no text, no labels, no border, no numbers. 2D illustrated fantasy game asset, beautiful readable at card size."
+    },
+    {
+      "path": "avatar-static/opening/art/act2/plant-asphodel.webp",
+      "prompt": "Hand-painted botanical plate for an antique Hogwarts herbarium, asphodel plant, long slender green leaves and tall elegant stalks of white six-petaled star flowers with brown central veins, entire specimen in a small aged terracotta pot (glass jar for waterweed), centered full silhouette with generous margins, detailed natural colors and fine watercolor/gouache textures, warm gold reflected light, accurate distinctive silhouette. Isolated on transparent background, no text, no labels, no border, no numbers. 2D illustrated fantasy game asset, beautiful readable at card size."
+    },
+    {
+      "path": "avatar-static/opening/art/act2/plant-gillyweed.webp",
+      "prompt": "Hand-painted botanical plate for an antique Hogwarts herbarium, magical gillyweed, tangled wet gray-green waterweed tendrils and slender slippery leaves in a small glass water jar, entire specimen in a small aged terracotta pot (glass jar for waterweed), centered full silhouette with generous margins, detailed natural colors and fine watercolor/gouache textures, warm gold reflected light, accurate distinctive silhouette. Isolated on transparent background, no text, no labels, no border, no numbers. 2D illustrated fantasy game asset, beautiful readable at card size."
+    },
+    {
+      "path": "avatar-static/opening/art/act2/plant-valerian.webp",
+      "prompt": "Hand-painted botanical plate for an antique Hogwarts herbarium, valerian plant, bright green pinnate leaves and delicate small pale pink flowers in rounded clusters, entire specimen in a small aged terracotta pot (glass jar for waterweed), centered full silhouette with generous margins, detailed natural colors and fine watercolor/gouache textures, warm gold reflected light, accurate distinctive silhouette. Isolated on transparent background, no text, no labels, no border, no numbers. 2D illustrated fantasy game asset, beautiful readable at card size."
+    }
+  ],
+  "notes": [
+    "Converted generated PNGs to WebP while retaining transparency.",
+    "The red cauldron was edited against the blue reference to keep the same silhouette.",
+    "The vision was revised to show a station clock approaching midnight."
+  ]
+}

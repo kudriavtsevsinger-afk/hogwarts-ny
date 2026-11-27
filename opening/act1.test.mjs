@@ -41,7 +41,7 @@ test('Whac-A-Mole accepts delayed taps, rejects future/foreign targets and dedup
  const r=roomFor();stage(r,'hunt');const h=r.act1.hunt,cell=h.schedule[0][0],at=1000+HUNT.lead;
  call(r,'tap',{cell,spawn:0},'oleg',at-1);assert.equal(h.hits.length,0);call(r,'tap',{cell,spawn:0},'oleg',at+HUNT.visible+250);assert.equal(h.hits.length,1);call(r,'tap',{cell,spawn:0},'oleg',at+HUNT.visible+350);assert.equal(h.hits.length,1);
  assert.throws(()=>call(r,'tap',{cell,spawn:1},'sima',at+HUNT.interval+500));call(r,'tap',{cell:h.schedule[1][0],spawn:1},'oleg',at+HUNT.interval+HUNT.visible+HUNT.grace+1);assert.equal(h.hits.length,1);
- const v=view(r);assert.equal(v.hunt.slots.length,3);assert(v.hunt.schedule.every(row=>row.length===1));assert.equal(view(r,'oleg',true).hunt.slots.length,9);assert.equal(v.hunt.goal,8);
+ const v=view(r);assert.equal(v.hunt.slots.length,3);assert.equal(v.hunt.schedule,null);assert.equal(view(r,'oleg',true).hunt.slots.length,9);assert.equal(v.hunt.goal,8);
 });
 test('Simon hides input sequence, ignores stale beats, replays mistakes and restricts each pad',()=>{
  const r=roomFor();stage(r,'chimes');let g=r.act1.chimes;tickAct1(r,1000+chimeShowMs(g));assert.equal(view(r).chimes.sequence,null);const pad=g.sequence[0],id=r.lineup[pad%3],version=g.version;
@@ -51,7 +51,7 @@ test('Simon hides input sequence, ignores stale beats, replays mistakes and rest
 });
 test('hint votes are state-sensitive and stale votes do not spend money',()=>{
  const r=roomFor();stage(r,'chimes');const g=r.act1.chimes;tickAct1(r,g.modeAt+chimeShowMs(g));call(r,'propose',{kind:'chime-hint'});const vote=r.act1.vote;const pad=g.sequence[0];call(r,'chime',{pad,version:g.version},r.lineup[pad%3]);call(r,'vote',{voteId:vote.id,yes:true},'sima');assert.equal(r.bank.balance,30);assert.equal(g.hint,null);
- call(r,'propose',{kind:'chime-hint'});call(r,'vote',{voteId:r.act1.vote.id,yes:true},'sima');assert.equal(r.bank.balance,29);assert.equal(view(r).chimes.hint,g.sequence[g.position]);
+ call(r,'propose',{kind:'chime-hint'});call(r,'vote',{voteId:r.act1.vote.id,yes:true},'sima');assert.equal(r.bank.balance,29);assert.equal(view(r).chimes.hint,null);assert.equal(view(r,'oleg',true).chimes.hint,g.sequence[g.position]);
 });
 test('votes need 60%, expire, do not overdraw; expenses above six coins remain possible',()=>{
  const r=roomFor(6);stage(r,'shop');call(r,'propose',{kind:'item',target:'watch',cost:0});const v=r.act1.vote;for(const id of ['sima','masha'])call(r,'vote',{voteId:v.id,yes:true},id);assert.equal(r.bank.balance,30);call(r,'vote',{voteId:v.id,yes:true},'vanya');assert.equal(r.bank.balance,28);buy(r,'magnifier');buy(r,'note');assert.equal(r.bank.spent,6);stage(r,'portraits');call(r,'propose',{kind:'portrait-hint',target:0});for(const id of ['sima','masha','vanya'])call(r,'vote',{voteId:r.act1.vote.id,yes:true},id);assert.equal(r.bank.spent,7);
