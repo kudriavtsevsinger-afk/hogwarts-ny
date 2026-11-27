@@ -35,7 +35,7 @@ export const ACT1_SCRIPT=[
  shot('chime-rules','ready',{title:'Эхо башни',instruction:'Запомните последовательность на общем экране. Затем повторите её вместе: каждый нажимает свои знаки на телефоне. Шесть ступеней — и колокол оживёт.'}),
  shot('chimes','chimes',{title:'Эхо башни',instruction:'Смотрите. Запоминайте. Повторяйте вместе.'}),
  line('chime-won','dumbledore','Вот теперь я слышу вас. Разные голоса — и один общий звон.',{expression:'smile',cue:'success',cueDuration:3}),
- shot('first-bell','bell',{title:'Удары полуночи: 3 из 12',durationMs:18000,music:null,cue:'midnight-three'}),
+ shot('first-bell','bell',{title:'Удары полуночи: 3 из 12',durationMs:19500,music:null,cue:'midnight-three'}),
  line('end-bell','dumbledore','Колокол не дозвонил. Значит, часть полуночи действительно осталась здесь.',{music:null}),
  line('end-mystery','dumbledore','Кто-то не хотел, чтобы этот звон прозвучал. Это уже не похоже на случайность.',{music:null}),
  shot('act-result','ready',{title:'Удары полуночи: 3 из 12',instruction:'Одна часть полуночи осталась в башне.',music:null}),

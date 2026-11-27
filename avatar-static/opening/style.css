@@ -446,3 +446,21 @@ svg.chime-symbol{width:52px;height:52px;display:block}.act-tv .chime-pad.lit{tra
 .a2-speaker{height:50vh;width:38vh;background-repeat:no-repeat;background-position:center bottom}.a2-display[data-kind="line"] .a2-copy{position:relative;margin-top:0}
 
 .act-two{background:linear-gradient(#07191b44,#07191be0),url('/art/act2/greenhouse.webp') center/cover fixed}.act-two:before{display:none}.a2-display[data-kind='line'] .a2-stage{min-height:48vh}
+
+.act-midnight{position:absolute;inset:0;margin:auto;width:min(48vw,69vh);height:min(48vw,69vh);max-width:none;pointer-events:none}
+.act-two{background-color:#101b1c;background-size:contain;background-repeat:no-repeat;background-position:center center;background-attachment:scroll}
+.a2-display{height:100dvh;overflow:hidden;padding:0;display:grid;grid-template-rows:minmax(0,1fr) auto}
+.a2-display .a2-stage{min-height:0}
+.a2-display .a2-copy{width:100%;max-width:none;min-height:12vh;margin:0;padding:2vh 7vw 3vh;background:linear-gradient(transparent,#080f12ed 34%);border:0}
+.a2-display .a2-copy h1{font-size:clamp(18px,2.35vw,37px)}
+.a2-phone{background-image:none;background-color:#102123}
+.a2-phone[data-kind=line] .a2-copy,.a2-phone[data-kind=vision] .a2-copy{background:none;border:0}
+.a2-display[data-kind=mirror] .a2-mirror,.a2-display[data-kind=consent] .a2-mirror{background:#0c242acf;border:0;box-shadow:none;max-width:min(47vw,550px);padding:24px;min-height:0;border-radius:12px}
+.a2-display .a2-speaker{height:100%;max-height:68vh}
+.a2-display{--act2-shot:url('/art/act2/greenhouse.webp');background-image:var(--act2-shot)}
+.a2-display:is([data-kind=mirror],[data-kind=consent],[data-scene=mirror-intro],[data-scene=reflection]){--act2-shot:url('/art/act2/mirror.webp')}
+.a2-display:is([data-kind=pot],[data-kind=flower],[data-scene=pot-intro],[data-scene=pot-ready]){--act2-shot:url('/art/act2/brew.webp')}
+.a2-sprout{display:block;max-height:100%;height:min(70vh,100%);max-width:48vw;object-fit:contain;align-self:end}
+.a2-display[data-kind=pot] .a2-copy p{margin:.35rem 0}
+.a2-display:is([data-kind=herb],[data-kind=shop],[data-scene=herb-intro],[data-scene=herb-open],[data-scene=vendor]){--act2-shot:url('/art/act2/herbarium.webp')}
+.a2-display[data-kind=mirror] .a2-mirror{align-self:center;width:25vw;font-size:clamp(15px,2vw,32px)}

@@ -32,7 +32,7 @@ window.GameSound=(()=>{
   const key=sceneKey;pendingCue=key;
   try{
    if(scene.cue==='midnight-three'){
-    const elapsed=(scene.elapsedMs||0)/1000;
+    const elapsed=scene.id==='first-bell'?0:(scene.elapsedMs||0)/1000;
     for(let strike=0;strike<3;strike++){
      const delay=strike*5-elapsed;if(delay<-.25)continue;
      const start=ctx.currentTime+Math.max(0,delay);
