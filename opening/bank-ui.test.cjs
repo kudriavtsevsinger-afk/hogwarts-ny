@@ -25,6 +25,7 @@ test('team bank is a single persistent overlay on display and phones, including 
    accept({...base,phase:'lineup',scene:undefined,lineup:cast});assert.equal(roster.hidden,false);assert.equal(roster.children.length,2);
   }
   if(!phone){for(const kind of ['title','end','black']){accept({...base,phase:'act1',act:{kind}});assert.equal(body.querySelector('#game-hud').hidden,true,'cinematic title must not show gameplay overlays');}accept({...base,phase:'act1',act:{kind:'shop'}});assert.equal(body.querySelector('#game-hud').hidden,false);}
+  if(!phone){for(const act2 of [{id:'title',kind:'line'},{id:'end',kind:'end'}]){accept({...base,phase:'act2',act2});assert.equal(body.querySelector('#game-hud').hidden,true);}accept({...base,phase:'act2',act2:{id:'shop',kind:'shop'}});assert.equal(body.querySelector('#game-hud').hidden,false);}
   accept({...base,bank:undefined});assert.equal(hud.hidden,true);assert.equal(body.querySelector('#game-hud').hidden,true);
  }
 });

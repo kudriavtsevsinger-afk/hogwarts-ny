@@ -1,6 +1,6 @@
 /* Shared Act I interface. The server owns all answers, purchases and timers. */
 window.ActOne=(()=>{
- let current,root,signature,hostMode,send,player,receivedAt=0,pending=false,selected=0,lastFeedback,pouch,pouchKey,pouchSelected=null,lastStage=null;
+ let current,root,signature,hostMode,send,player,receivedAt=0,pending=false,selected=0,lastFeedback,lastStage=null;
  const drafts=new Map(),localHits=new Set();
  const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n;};
  const image=(url,alt,cls)=>{const n=el('img',cls);n.src=url;n.alt=alt||'';return n;};
@@ -15,41 +15,21 @@ window.ActOne=(()=>{
  }
  function button(parent,text,type,payload={},cls='act-button'){const b=el('button',cls,text);b.type='button';b.onclick=()=>action(type,typeof payload==='function'?payload():payload);parent.append(b);return b;}
  function stat(parent,label,value,cls){const n=el('div','act-stat '+(cls||''));n.append(el('span','',label),el('strong','',value));parent.append(n);return n;}
- function makeCopy(){const copy=el('div','act-copy');copy.append(el('h1','act-heading'),el('p','act-instruction'),el('p','act-event'));root.append(copy);}
+ function makeCopy(){const copy=root.querySelector('.act-copy');copy.append(el('h1','act-heading'),el('p','act-instruction'),el('p','act-event'));}
  function makeVote(){const area=el('aside','act-vote');area.hidden=true;area.append(el('h2','vote-title'),el('p','vote-progress'));if(!hostMode){const controls=el('div','vote-buttons');button(controls,'За','vote',()=>({voteId:current.act.vote?.id,yes:true}));button(controls,'Против','vote',()=>({voteId:current.act.vote?.id,yes:false}),'act-button quiet');area.append(controls);}root.append(area);}
  function makeReady(parent,label='Продолжить'){if(!hostMode)button(parent,label,'ready',{},'act-button act-continue');parent.append(el('p','act-ready'));}
  function makeShop(parent){
   const items=el('div','act-items');
   for(const item of current.act.items){
-   const tile=el('section','act-item');tile.dataset.item=item.id;
-   tile.append(image(item.image,item.name,'item-art'),el('h2','',item.name),el('p','',item.description),el('strong','item-price',item.cost+' мон.'));
+   const tile=window.GameUI.shopItem(item);
    if(!hostMode)button(tile,'Предложить покупку','propose',{kind:'item',target:item.id});items.append(tile);
   }
   parent.append(items);makeReady(parent,'Продолжить путь');
  }
  function updateInventory(){
-  if(!current?.act)return;
-  if(!pouch){pouch=el('aside','team-inventory');pouch.id='team-inventory';pouch.setAttribute('aria-label','Артефакты команды');document.body.append(pouch);}
-  const items=current.act.pouch||[];pouch.hidden=!items.length||['title','end','black'].includes(current.act.kind);pouch.className='team-inventory '+(hostMode?'display-inventory':'phone-inventory');
-  document.body.classList.toggle('has-inventory',Boolean(items.length));
-  if(!items.some(i=>i.id===pouchSelected))pouchSelected=null;
-  const key=JSON.stringify([hostMode,items,pouchSelected,selected,current.paused,pending]);
-  if(pouchKey===key)return;pouchKey=key;pouch.replaceChildren();
-  pouch.append(el('span','inventory-label','Артефакты команды'));
-  const row=el('div','inventory-row');pouch.append(row);
-  for(const item of items){
-   const slot=el(hostMode?'div':'button','inventory-slot'+(item.usable?' available':''));
-   slot.append(image(item.image,'','inventory-image'),el('span','inventory-name',item.name),el('small','inventory-status',item.usable?'Можно использовать':'Пригодится позже'));
-   if(!hostMode){slot.type='button';slot.setAttribute('aria-label',item.name+' · '+(item.usable?'можно использовать':'пригодится позже'));slot.onclick=()=>{pouchSelected=pouchSelected===item.id?null:item.id;updateInventory();};}
-   row.append(slot);
-  }
-  const item=items.find(i=>i.id===pouchSelected);
-  if(item&&!hostMode){
-   const detail=el('section','inventory-detail');detail.append(el('h2','',item.name),el('p','',item.help));
-   if(item.id==='magnifier'&&item.usable)detail.append(el('p','', 'Твоя цель — картина '+(selected+1)+'.'));
-   if(item.usable){const use=button(detail,'Использовать','use',()=>({item:item.id,...(item.id==='magnifier'?{painting:selected}:{})}));use.disabled=pending||current.paused||(item.id==='magnifier'&&current.act.paintings?.find(p=>p.index===selected)?.solved);}
-   const close=el('button','act-button quiet','Закрыть');close.type='button';close.onclick=()=>{pouchSelected=null;updateInventory();};detail.append(close);pouch.append(detail);
-  }
+  if(!current?.act)return;const a=current.act;
+  const items=(a.pouch||[]).map(i=>({...i,usable:i.usable&&!(i.id==='magnifier'&&a.paintings?.find(p=>p.index===selected)?.solved),context:i.id==='magnifier'&&i.usable?'Твоя цель — картина '+(selected+1)+'.':null}));
+  window.GameUI.inventory({owner:'act1',host:hostMode,items,key:a.key,disabled:pending||current.paused,hidden:['title','end','black'].includes(a.kind),onUse:item=>action('use',{item,...(item==='magnifier'?{painting:selected}:{})})});
  }
  function makeHunt(parent){const stats=el('div','act-stats');stat(stats,'Осталось','1:00','hunt-time');stat(stats,'Поимки','0','hunt-hits');stat(stats,'Промахи','0','hunt-misses');parent.append(stats);const cells=el('div','hunt-niches');for(const slot of current.act.hunt.slots){const n=el(hostMode?'div':'button','hunt-niche');n.dataset.cell=slot.index;if(!hostMode){n.type='button';n.onclick=()=>{const c=current.act.hunt.config,t=current.act.elapsedMs+(current.paused?0:performance.now()-receivedAt)-c.lead;void action('tap',{cell:slot.index,spawn:Math.floor(t/c.interval)});};}n.setAttribute('aria-label','Ниша '+(slot.index+1));n.append(image('/art/act1/props/niche.webp','','niche-art'),el('span','niche-number',slot.index+1),...(hostMode?[image('/art/castle/peeves.webp','Пивз','niche-peeves')]:[]),el('span','niche-owner',hostMode?name(slot.owner):'Твоя ниша'));cells.append(n);}parent.append(cells);}
  function makePortraits(parent){
@@ -74,9 +54,9 @@ window.ActOne=(()=>{
   const pads=el('div','chime-pads');for(const p of current.act.chimes.pads){const b=el(hostMode?'div':'button','chime-pad');b.dataset.pad=p.index;b.style.setProperty('--chime',p.color);b.append(chimeIcon(p.index),el('span','chime-name',p.name));if(hostMode)b.append(el('small','chime-owner',name(p.owner)));else{b.type='button';b.setAttribute('aria-label',p.name);b.onclick=()=>action('chime',{pad:p.index,version:current.act.chimes.version});}pads.append(b);}stage.append(pads,el('div','chime-beats'));parent.append(stage);
   if(!hostMode){const actions=el('div','chime-actions');button(actions,'Посмотреть ещё раз','replay',()=>({version:current.act.chimes.version}),'act-button quiet chime-replay');button(actions,'Следующий знак · 1 мон.','propose',{kind:'chime-hint'},'act-button quiet chime-hint');parent.append(actions);}
  }
- function build(parent){const a=current.act;root=el('section','act-screen '+(hostMode?'act-tv':'act-phone'));root.dataset.kind=a.kind;root.dataset.scene=a.id;root.style.backgroundImage=current.scene?.backgroundUrl?'url('+current.scene.backgroundUrl+')':'none';if(!hostMode)root.style.backgroundImage='linear-gradient(#0b1323e8,#0b1323f5),url(/art/act1/tower.webp)';root.setAttribute('aria-label','Акт I. Часовая башня');
- if(hostMode&&!['title','end'].includes(a.kind)){const top=el('div','act-kicker','АКТ I · ЧАСОВАЯ БАШНЯ');root.append(top);}
- const main=el('div','act-main');root.append(main);makeCopy();makeVote();const reading=el('aside','note-reading');reading.hidden=true;reading.setAttribute('aria-live','polite');root.append(reading);parent.replaceChildren(root);
+ function build(parent){const a=current.act;
+ const frame=window.GameUI.activity({host:hostMode,kind:a.kind,id:a.id,key:a.key,background:current.scene?.backgroundUrl||'/art/act1/tower.webp',label:'Акт I. Часовая башня',kicker:'АКТ I · ЧАСОВАЯ БАШНЯ'});root=frame.root;const main=frame.main;
+ makeCopy();makeVote();const reading=el('aside','note-reading');reading.hidden=true;reading.setAttribute('aria-live','polite');root.append(reading);root=window.GameUI.mount(parent,root);
  if(['title','end'].includes(a.kind)){main.append(el('p','act-title',a.title),el('h1','act-subtitle',a.subtitle));if(a.kind==='end')main.append(el('p','act-complete','Первый акт завершён'));}
  else if(a.kind==='shop')makeShop(main);
  else if(a.kind==='hunt')makeHunt(main);
@@ -124,16 +104,16 @@ window.ActOne=(()=>{
 
 
  }
- return{render(state,parent,display,submit,id){current=state;send=submit;player=id;hostMode=display;receivedAt=performance.now();const a=state.act;if(lastStage!==a.key){pouchSelected=null;localHits.clear();lastStage=a.key;}if(a.kind==='portraits')selected=a.assignment??0;
+ return{render(state,parent,display,submit,id){current=state;send=submit;player=id;hostMode=display;receivedAt=performance.now();const a=state.act;if(lastStage!==a.key){localHits.clear();lastStage=a.key;}if(a.kind==='portraits')selected=a.assignment??0;
   updateInventory();
   if(['line','black','travel'].includes(a.kind)){
    signature=null;root=null;
    if(display)window.PrologueScene.render(state.scene,parent);
-   else {let waiting=parent.querySelector('.act-waiting');if(!waiting){waiting=el('section','panel act-waiting');waiting.append(el('h1','','Часовая башня'),el('p','','Смотри на общий экран.'));parent.replaceChildren(waiting);}}
+   else {let waiting=parent.querySelector('.act-waiting');if(!waiting){waiting=window.GameUI.waiting('Часовая башня');parent.replaceChildren(waiting);}}
    return;
   }
   const key=a.key+':'+display+':'+(a.assignment??'');if(signature!==key||!root?.isConnected){signature=key;window.PrologueScene?.release?.();build(parent);}update();
- },hide(){current=null;root=null;signature=null;pouchSelected=null;pouchKey=null;if(pouch)pouch.hidden=true;document.body.classList.toggle('has-inventory',false);},tick(){if(current?.phase==='act1')update();}};
+ },hide(){current=null;root=null;signature=null;window.GameUI.hideInventory('act1');},tick(){if(current?.phase==='act1')update();}};
 })();
 setInterval(()=>window.ActOne.tick(),100);
 
@@ -149,21 +129,25 @@ window.ActTwo=(()=>{
  function timer(a){return a.kind==='mirror'&&a.mode==='reveal'?'':Math.ceil(a.remaining/1000)+' с';}
  return {render(state,parent,host,send){
  const a=state.act2,stable={...a,remaining:0,locked:!!a.locked};
+ const call=async(type,data={})=>{if(busy||state.paused)return;busy=true;try{await send({type,key:a.key,nonce:crypto.randomUUID(),...data});}catch(e){window.GameNotice?.show(e.message);}finally{busy=false;}};
+ const btn=(to,label,type,data={},cls='')=>{const b=window.GameUI.button(label,()=>call(type,typeof data==='function'?data():data));if(cls)b.classList.add(cls);b.disabled=state.paused;to.append(b);return b;};
+ window.GameUI.inventory({owner:'act2',host,key:a.key,disabled:state.paused||busy,hidden:['end'].includes(a.kind)||a.id==='title',items:a.inventory.map(i=>({...i,image:itemArt(i.id),help:itemHelp[i.id],usable:a.kind==='pot'&&a.mode==='input'})),onUse:item=>call('use',{item})});
+ const background=art+(['pot','flower'].includes(a.kind)||['pot-intro','pot-ready','listen'].includes(a.id)?'brew':['herb','shop'].includes(a.kind)||['herb-intro','herb-open','vendor'].includes(a.id)?'herbarium':['mirror','consent','choice'].includes(a.kind)||['mirror-intro','vision','reflection'].includes(a.id)?'mirror':'greenhouse')+'.webp';
+ if(a.kind==='line'&&a.id!=='title'){
+  signature='';
+  if(host){const scene={...state.scene,key:a.key,id:a.id,chapter:8,visual:'castle-dialogue',backgroundUrl:background,speaker:a.speaker,text:a.text,actor:({'Профессор Спраут':'sprout','Дамблдор':'dumbledore','Продавщица':'vendor'})[a.speaker],expression:'smile',cast:a.cast||[]};window.PrologueScene.render(scene,parent);window.PrologueScene.sync(scene,state.paused);}
+  else if(!parent.querySelector('.act-waiting'))parent.replaceChildren(window.GameUI.waiting('Зимняя теплица'));
+  return;
+ }
+ if(!host&&['vision','flower','end'].includes(a.kind)){if(!parent.querySelector('.act-waiting'))parent.replaceChildren(window.GameUI.waiting('Зимняя теплица'));return;}
  const sig=JSON.stringify([stable,host,state.paused]);
  if(signature===sig&&parent.querySelector('.act-two')){parent.querySelectorAll('.a2-timer').forEach(e=>e.textContent=timer(a));return;}
  signature=sig;window.PrologueScene?.release?.();
- document.querySelector('#team-inventory')?.remove();document.body.classList.remove('has-inventory');
- const root=el('section','act-two '+(host?'a2-display':'a2-phone'));root.dataset.kind=a.kind;root.dataset.scene=a.id;
- const call=async(type,data={})=>{if(busy||state.paused)return;busy=true;try{await send({type,key:a.key,nonce:crypto.randomUUID(),...data});}catch(e){window.GameNotice?.show(e.message);}finally{busy=false;}};
- const btn=(to,label,type,data={},cls='')=>{const b=el('button','act-button '+cls,label);b.type='button';b.disabled=state.paused;b.onclick=()=>call(type,typeof data==='function'?data():data);to.append(b);return b;};
- const stage=el('div','a2-stage'),copy=el('div','a2-copy');root.append(stage,copy);
- const title=a.speaker||({mirror:`Желание ${a.round} из ${a.totalRounds}`,consent:'Еиналеж',choice:'Твой выбор',herb:'Гербарий Спраут',pot:'Эликсир Спраут'}[a.kind])||a.text;
- copy.append(el('h1','speaker-name',title));
- if(a.speaker&&a.text)copy.append(el('p','spoken-line',a.text));
- if(!host&&['line','vision','flower','end'].includes(a.kind)){copy.replaceChildren(el('h1','speaker-name','Зимняя теплица'),el('p','','Смотри на общий экран.'));parent.replaceChildren(root);return;}
- if(host&&a.speaker==='Профессор Спраут')stage.append(img(art+'sprout.webp',a.speaker,'a2-sprout'));
- if(host&&a.kind==='line'&&a.speaker==='Дамблдор'){const actor=el('div','a2-speaker a2-dumbledore');actor.setAttribute('role','img');actor.setAttribute('aria-label','Дамблдор');stage.append(actor);}
- if(host&&a.kind==='line'&&a.speaker==='Продавщица')stage.append(img('/art/scene-02/vendor.webp',a.speaker,'a2-sprout'));
+ const frame=window.GameUI.activity({host,kind:a.id==='title'?'title':a.kind,id:a.id,key:a.key,background,label:'Акт II. Зимняя теплица',kicker:'АКТ II · ЗИМНЯЯ ТЕПЛИЦА'});
+ let root=frame.root;root.classList.add('act-two');const stage=frame.main,copy=frame.copy;
+ const title=({mirror:`Желание ${a.round} из ${a.totalRounds}`,consent:'Еиналеж',choice:'Твой выбор',herb:'Гербарий Спраут',pot:'Эликсир Спраут'}[a.kind])||a.text;
+ copy.append(el('h1','act-heading',title));
+ if(a.id==='title'||a.kind==='end'){stage.append(el('p','act-title',a.id==='title'?'АКТ II':'АКТ III'),el('h1','act-subtitle',a.id==='title'?'Зимняя теплица':'Библиотека'));if(a.kind==='end')stage.append(el('p','act-complete','Второй акт завершён'));}
  const mirrorShot=['mirror','consent','choice'].includes(a.kind)||['vision','reflection'].includes(a.id);
  if(host&&mirrorShot){
  const scene=el('div','a2-mirror-shot');scene.append(img(art+'mirror.webp','','a2-mirror-backdrop'));
@@ -174,7 +158,7 @@ window.ActTwo=(()=>{
  if(a.remaining>0&&!['line','vision','flower'].includes(a.kind))copy.append(el('p','a2-timer',timer(a)));
  if(a.message)copy.append(el('p','',a.message));
  if(['ready','shop'].includes(a.kind)){copy.append(el('p','',`Готовы: ${a.ready}/${a.total}`));if(!host)btn(copy,'Готов','ready');}
- if(a.kind==='shop'){const shelf=el('div','a2-shop');for(const item of a.items){const card=el('article','a2-item');card.append(img(itemArt(item.id),item.name,'a2-item-art'),el('h2','',item.name),el('p','',itemHelp[item.id]),el('span','item-price',item.cost+' мон.'));if(!host)btn(card,'Предложить покупку','propose',{target:item.id});shelf.append(card);}stage.append(shelf);}
+ if(a.kind==='shop'){const shelf=el('div','act-items');for(const item of a.items){const card=window.GameUI.shopItem({...item,image:itemArt(item.id),description:itemHelp[item.id]});if(!host)btn(card,'Предложить покупку','propose',{target:item.id});shelf.append(card);}stage.append(shelf);}
  if(a.kind==='consent'){copy.append(el('p','',host?'Реши на телефоне, готов ли ты показать своё желание.':'Показать твоё желание из пролога анонимно? Без ответа оно останется в тайне.'));if(!host&&!a.answered){btn(copy,'Показать','consent',{yes:true});btn(copy,'Оставить в тайне','consent',{yes:false});}}
  if(a.kind==='mirror'){
  if(a.result)copy.append(el('p','a2-reveal',(a.result.correct?'Верно! ':'')+a.result.name));
@@ -204,14 +188,13 @@ window.ActTwo=(()=>{
  if(!host&&a.mode==='input'){const ingredients=el('div','a2-ingredients');for(const b of a.buttons){const button=btn(ingredients,'','ingredient',{ingredient:b.id,version:a.version},'a2-ingredient');button.append(img(art+'plant-'+plants[b.id]+'.webp','',''),el('span','',b.name));}copy.append(ingredients);btn(copy,'Подсказка · 1 мон.','propose',{target:'potHint'});}
  }
  if(a.kind==='flower')stage.append(el('div','a2-flower','✧'));
- if(a.inventory.length){const bag=el(host?'aside':'details','a2-inventory');bag.append(el(host?'strong':'summary','','Артефакты команды · '+a.inventory.length));for(const i of a.inventory){const slot=el('div','a2-inventory-slot');slot.append(img(itemArt(i.id),'',''),el('span','',i.name));if(!host&&a.kind==='pot'&&a.mode==='input')btn(slot,'Применить','use',{item:i.id});bag.append(slot);}root.append(bag);}
  if(!host&&a.ability){const b=el('details','a2-ability');b.append(el('summary','',a.ability.name),el('p','',a.ability.desc));if(a.tie){b.open=true;for(const id of a.tie)btn(b,a.options.find(o=>o.id===id)?.name||id,'ability',{answer:id});}else if(a.ability.id==='maker_touch'){b.append(el('p','','Это сменит рецепт в текущем раунде. Уже добавленные ингредиенты сбросятся.'));btn(b,'Подтверждаю: сменить рецепт','ability',{confirm:true});}else btn(b,'Применить','ability');root.append(b);}
- if(a.vote){const vote=el('aside','a2-vote');vote.append(el('strong','',`Общая покупка · ${a.vote.cost} мон.`),el('p','',`За: ${a.vote.yes}, против: ${a.vote.no}`));if(!host&&!a.vote.voted){btn(vote,'За','vote',{voteId:a.vote.id,yes:true});btn(vote,'Против','vote',{voteId:a.vote.id,yes:false});}root.append(vote);}
+ if(a.vote){const vote=el('aside','act-vote'+(!host&&a.vote.voted?' vote-answered':''));vote.append(el('h2','vote-title',`Общая покупка · ${a.vote.cost} мон.`),el('p','vote-progress',`За: ${a.vote.yes}, против: ${a.vote.no}`));if(!host&&!a.vote.voted){const controls=el('div','vote-buttons');btn(controls,'За','vote',{voteId:a.vote.id,yes:true});btn(controls,'Против','vote',{voteId:a.vote.id,yes:false});vote.append(controls);}root.append(vote);}
  // Preserve focused code entry and expanded sheets across room polling.
  const focused=parent.querySelector('.a2-code')===document.activeElement;
  const expanded=[...parent.querySelectorAll('details[open]')].map(d=>d.querySelector('summary')?.textContent);
  const oldKey=parent.querySelector('.act-two')?.dataset.key;root.dataset.key=a.key;
  if(oldKey===a.key)for(const d of root.querySelectorAll('details'))if(expanded.includes(d.querySelector('summary')?.textContent))d.open=true;
- parent.replaceChildren(root);if(focused&&oldKey===a.key)root.querySelector('.a2-code')?.focus();
+ root=window.GameUI.mount(parent,root);if(focused&&oldKey===a.key)root.querySelector('.a2-code')?.focus();
  }};
 })();

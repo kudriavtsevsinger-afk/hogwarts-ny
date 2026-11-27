@@ -446,39 +446,15 @@ body[data-phase="act1"] #screen,body[data-phase="act2"] #screen{width:100%;max-w
 .act-phone .hunt-niche.visible{border-color:transparent;background:none}
 .act-phone .niche-number{left:0;right:0;bottom:23%;font:32px/1 Georgia,serif;text-align:center;color:#f3d9a2;text-shadow:0 2px 8px #000}
 .act-phone .niche-owner{display:none}
-.act-two{position:relative;color:#f6e8cc;background:#080f1c;font:18px/1.55 system-ui,sans-serif;isolation:isolate}
-.a2-display{height:100svh;overflow:hidden;background:url('/art/act2/greenhouse.webp') center/cover no-repeat}
-.a2-display:is([data-kind=pot],[data-kind=flower],[data-scene=pot-intro],[data-scene=pot-ready]){background-image:url('/art/act2/brew.webp')}
-.a2-display:is([data-kind=herb],[data-kind=shop],[data-scene=herb-intro],[data-scene=herb-open],[data-scene=vendor]){background-image:url('/art/act2/herbarium.webp')}
-.a2-display .a2-stage{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;gap:24px}
-.a2-copy{position:relative;text-align:center}
-.a2-display .a2-copy{position:absolute;z-index:3;inset:auto 0 0;padding:5svh 7vw 3svh;background:linear-gradient(transparent,#050b16ed 36%);pointer-events:none}
-.a2-copy .speaker-name{font-family:Midnight,Georgia,serif;font-size:clamp(28px,3.4vw,52px);line-height:1.2;margin:0 0 12px;color:#e5c78c}
-.a2-copy .spoken-line{font:clamp(19px,1.9vw,30px)/1.55 Georgia,serif;max-width:1300px;margin:0 auto;text-wrap:pretty}
-.a2-copy p{font-family:system-ui,sans-serif;margin:6px auto;max-width:1100px}
-.a2-copy .spoken-line{font-family:Georgia,serif}
-.a2-copy h2,.a2-item h2{font-family:Midnight,Georgia,serif;font-weight:400}
-.a2-sprout{position:absolute;height:92svh;width:auto;max-width:58vw;object-fit:contain;object-position:bottom;bottom:0;left:50%;transform:translateX(-50%);filter:drop-shadow(0 8px 18px #0005)}
-.a2-speaker.a2-dumbledore{position:absolute;height:96svh;aspect-ratio:1/2;width:auto;bottom:0;left:50%;transform:translateX(-50%);background:url('/art/castle/dumbledore.webp') left bottom/300% 100% no-repeat}
 .a2-timer{font:20px/1.4 system-ui,sans-serif;color:#dfc795;font-variant-numeric:tabular-nums}.a2-timer:empty{display:none}
 .a2-mirror-shot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:max(100vw,177.7778svh);aspect-ratio:16/9;pointer-events:none}
 .a2-mirror-backdrop{display:block;width:100%;height:100%;object-fit:cover}
 .a2-mirror{position:absolute;left:38%;top:23%;width:23%;height:49%;padding:2%;display:grid;place-items:center;text-align:center;font:clamp(22px,2.3vw,38px)/1.55 Georgia,serif;color:#fff1cb;text-shadow:0 0 12px #eddbaf55,0 3px 9px #000;overflow-wrap:anywhere;white-space:pre-wrap}
 .a2-reflection{position:absolute;left:37.9%;top:14.3%;width:24.8%;height:67%;border-radius:50%;overflow:hidden;box-shadow:inset 0 0 35px #b5d5d866;animation:a2-vision 5s ease both}
 .a2-reflection img{width:100%;height:100%;object-fit:cover}
-.a2-shop{display:flex;align-items:flex-end;justify-content:center;gap:4vw;width:min(1100px,90vw);margin:auto auto 23svh}
-.a2-item{flex:1;max-width:330px;text-align:center;padding:16px;background:linear-gradient(transparent,#070f1bc9 60%);border-bottom:1px solid #bf9b5d77}
-.a2-item-art{height:27svh;width:100%;object-fit:contain;filter:drop-shadow(0 5px 15px #0008)}
-.a2-item h2{font-size:30px;margin:6px 0}.a2-item p{font:16px/1.5 system-ui;margin:8px 0}.a2-item .item-price{font:22px Georgia,serif;color:#efcf8e}
-.a2-inventory{z-index:7;color:#e6d6b6;font:14px/1.4 system-ui;background:#0b1823e8;border:1px solid #ae8e5044;border-radius:12px;padding:12px}
-.a2-display .a2-inventory{position:absolute;left:20px;top:25px;display:flex;align-items:center;gap:12px;max-width:55vw}
-.a2-display .a2-inventory>strong{max-width:85px;font-size:12px;font-weight:400;color:#c2b394}
-.a2-inventory-slot{display:flex;gap:8px;align-items:center}.a2-inventory-slot img{width:52px;height:48px;object-fit:contain}.a2-inventory-slot span{max-width:100px;font-size:12px}
-.a2-ability{padding:15px;border:1px solid #c9a25a55;border-radius:10px;background:#172333}.a2-ability p{font:16px/1.5 system-ui;margin:12px 0}.a2-ability summary,.a2-inventory summary{cursor:pointer}
-.a2-vote{position:absolute;z-index:10;top:100px;left:50%;transform:translateX(-50%);width:min(480px,90vw);padding:18px;background:#0c1728f5;border:1px solid #d2ad69;border-radius:12px;text-align:center}
-.a2-vote button{margin:5px}.a2-reveal{color:#f1d39a;font-size:22px}
+.a2-ability{padding:15px;border:1px solid #c9a25a55;border-radius:10px;background:#172333}.a2-ability p{font:16px/1.5 system-ui;margin:12px 0}.a2-ability summary{cursor:pointer}
 .a2-cauldron-art{position:absolute;width:min(52vw,67svh);height:min(52vw,67svh);bottom:24svh;left:50%;transform:translateX(-50%)}
-.a2-pot-image{position:absolute;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 20px 18px #0009)}
+.a2-pot-image{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 20px 18px #0009)}
 .a2-steam{position:absolute;left:30%;top:5%;width:40%;height:40%;pointer-events:none}
 .a2-steam i{position:absolute;bottom:0;left:calc(var(--i)*18%);width:26%;height:85%;border-radius:50%;background:linear-gradient(transparent,#d5e6eaaa);filter:blur(12px);animation:a2-steam 3s ease-in-out infinite;animation-delay:calc(var(--i)*-.6s)}
 .a2-cauldron-art[data-steam="0"] .a2-steam{display:none}.a2-cauldron-art[data-steam="1"] .a2-steam{opacity:.4}.a2-cauldron-art[data-steam="1"] .a2-steam i:nth-child(n+3){display:none}
@@ -486,11 +462,6 @@ body[data-phase="act1"] #screen,body[data-phase="act2"] #screen{width:100%;max-w
 .a2-frost{display:none;position:absolute;left:18%;top:31%;width:64%;height:22%;border:9px dotted #def5ff;border-radius:50%;filter:drop-shadow(0 0 4px #cceeff)}
 .a2-cauldron-art[data-frost="true"] .a2-frost{display:block}.a2-cauldron-art[data-glow="true"] .a2-pot-image{filter:drop-shadow(0 0 35px #ffdf74);animation:a2-glow 2s ease-in-out infinite alternate}
 .a2-flower{position:absolute;inset:20% 0 auto;text-align:center;font-size:200px;color:#eafff5;text-shadow:0 0 80px #baf1dc}
-.a2-phone{min-height:100svh;width:100%;padding:85px max(18px,calc((100% - 580px)/2)) 35px;background:radial-gradient(ellipse at top,#253a43,#080f1c 70%);display:flex;flex-direction:column;gap:20px}
-.a2-phone .a2-copy{order:0}.a2-phone .a2-stage{order:1;display:flex;flex-direction:column;gap:18px}.a2-phone .a2-inventory,.a2-phone .a2-ability{order:2}
-.a2-phone .a2-copy .speaker-name{font-size:33px}.a2-phone .a2-copy p{font-size:16px}.a2-phone .a2-copy button{margin:5px;min-height:50px}.a2-phone .a2-stage:empty{display:none}
-.a2-phone .a2-shop{display:flex;flex-direction:column;width:100%;margin:0;gap:18px}.a2-phone .a2-item{width:100%;max-width:none;padding:16px;border:1px solid #bca26555;border-radius:12px;background:#101d2d}.a2-phone .a2-item-art{height:130px}
-.a2-phone .a2-inventory-slot{margin-top:12px}.a2-phone .a2-inventory-slot span{max-width:none;flex:1;font-size:15px}.a2-phone .a2-inventory-slot button{font-size:14px;padding:8px}.a2-phone .a2-vote{position:fixed;top:75px}
 .a2-choices{display:grid;grid-template-columns:1fr;gap:8px}.a2-code{display:block;margin:20px auto;padding:18px;width:100%;max-width:320px;text-align:center;font:26px system-ui;letter-spacing:.12em}
 .a2-sheets{display:grid;gap:12px;width:100%}.a2-sheet{padding:18px;border:1px solid #c0a572;border-radius:4px;background:#e7d9b7;color:#302a21}.a2-sheet summary{font:20px/1.4 Georgia,serif;cursor:pointer}.a2-sheet p{font:18px/1.65 Georgia,serif;margin:14px 0 0}
 .a2-ingredients{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.a2-ingredient{display:flex;flex-direction:column;padding:12px!important;background:linear-gradient(#22313e,#111d2c);color:#f5dfb5}.a2-ingredient img{width:100%;height:120px;object-fit:contain}.a2-ingredient span{font:17px system-ui}
@@ -504,3 +475,20 @@ body[data-phase="act2"] .admin-console{position:relative;width:min(580px,92vw);m
 /* The effects sit on the liquid surface, never on the body of the pot. */
 .a2-bubbles{left:24%;top:14%;width:52%;height:18%}
 .a2-frost{left:17%;top:10%;width:66%;height:25%;border:6px solid #d8f1f5b3;box-shadow:0 0 8px #e5fbff,inset 0 0 8px #c7edff;clip-path:polygon(0 0,100% 0,100% 100%,94% 100%,91% 78%,88% 100%,80% 100%,77% 82%,73% 100%,61% 100%,58% 78%,53% 100%,43% 100%,39% 80%,35% 100%,23% 100%,20% 78%,16% 100%,6% 100%,3% 78%,0 100%)}
+
+/* Shared presentation rules. Act renderers supply content, not a second theme. */
+.act-phone{display:flex;flex-direction:column;gap:20px;background-attachment:fixed}
+.act-phone .act-copy{pointer-events:auto;order:-1}
+.act-phone .act-main{max-width:600px}
+.act-phone .act-copy{width:min(100%,600px);margin:0 auto}
+.act-copy p:not(.act-instruction):not(.act-event){font-family:system-ui,sans-serif;font-size:16px;line-height:1.55;margin:7px auto}
+.act-phone .act-copy button{margin:5px;min-height:48px}
+.act-tv .act-copy{z-index:4}
+.act-copy:empty{display:none}
+.ui-outgoing{position:fixed!important;inset:0!important;z-index:20;pointer-events:none!important;margin:0!important}
+.story-stage[data-visual="castle-dialogue"] .sprout-actor{left:68%;height:145svh;bottom:-48svh;width:auto;max-width:none;object-fit:contain}
+.story-stage[data-framing="wide"] .sprout-actor{height:90svh;bottom:1svh}
+.a2-ability{width:min(100%,600px);margin:0 auto}
+.a2-timer{font-variant-numeric:tabular-nums}
+
+.a2-reveal{font:20px/1.5 system-ui,sans-serif;color:#e9ce91}

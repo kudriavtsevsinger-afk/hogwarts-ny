@@ -8,7 +8,7 @@ class Element {
  setAttribute(k,v){this[k]=v;}
  cloneNode(deep){const n=new Element(this.tag);n.className=this.className;n.dataset={...this.dataset};Object.assign(n.style,this.style);n.src=this.src;n.textContent=this.textContent;if(deep)n.append(...this.children.map(c=>c.cloneNode(true)));return n;}
  all(){return this.children.flatMap(c=>[c,...c.all()]);}
- querySelectorAll(q){return this.all().filter(c=>q.startsWith('.')?c.className.split(' ').includes(q.slice(1)):c.tag===q);}
+ querySelectorAll(q){return this.all().filter(c=>q.startsWith('#')?c.id===q.slice(1):q.startsWith('.')?c.className.split(' ').includes(q.slice(1)):q==='details[open]'?c.tag==='details'&&c.open:c.tag===q);}
  querySelector(q){return this.querySelectorAll(q)[0]||null;}
  animate(frames,options){let finish;const a={frames,options,currentTime:0,playState:'running',finished:new Promise(r=>finish=r),finish:()=>finish(),pause(){this.playState='paused';},play(){this.playState='running';},cancel(){this.playState='idle';}};(this.animations??=[]).push(a);return a;}
  getAnimations(){return [this,...this.all()].flatMap(n=>n.animations||[]).filter(a=>a.playState!=='idle');}
@@ -76,4 +76,43 @@ test('meow and offscreen conductor keep the same Filch image mounted',()=>{
  renderer.render(s,root);const stage=root.children[0],actor=stage.querySelector('.filch-actor');
  renderer.render({...s,key:'conductor-filch',speaker:'Проводник · за кадром',text:'Да, мистер Филч, это относится и к вам!'},root);
  assert.equal(root.children[0],stage);assert.equal(stage.querySelector('.filch-actor'),actor);assert.equal(actor.alt,'Филч с кошкой');
+});
+
+function setupActs(motion=false){
+ const body=new Element('body'),root=new Element('main');body.append(root);
+ const context=vm.createContext({window:{matchMedia:()=>({matches:!motion})},document:{body,activeElement:null,querySelector:q=>body.querySelector(q),createElement:t=>new Element(t)},Image:class{},setInterval(){},performance:{now:()=>100},crypto:{randomUUID:()=> 'nonce'}});
+ for(const name of ['scene','act1'])vm.runInContext(fs.readFileSync(new URL('../avatar-static/opening/'+name+'.js','file://'+__filename),'utf8'),context);
+ return {...context.window,body,root};
+}
+const actTwoBase={key:'a2:1',kind:'line',id:'sprout',speaker:'Профессор Спраут',text:'Добро пожаловать!',remaining:9000,ready:0,total:3,inventory:[],cast:[]};
+test('Act II dialogue uses the prologue stage and retains actor across consecutive lines',()=>{
+ const {ActTwo,PrologueScene,root}=setupActs();
+ PrologueScene.render({key:'p:1',chapter:5,visual:'castle-dialogue',background:'great-hall',actor:'dumbledore',speaker:'Дамблдор',text:'Ужин',cast:[]},root);
+ const prologueCaption=root.querySelector('.story-copy').className;
+ ActTwo.render({act2:actTwoBase},root,true,async()=>{});
+ const stage=root.querySelector('.story-stage'),actor=root.querySelector('.sprout-actor');assert(stage);assert(actor);assert.equal(root.querySelector('.story-copy').className,prologueCaption);assert.equal(root.querySelector('.act-screen'),null);
+ ActTwo.render({act2:{...actTwoBase,key:'a2:2',text:'Лёд пошёл изнутри.'}},root,true,async()=>{});
+ assert.equal(root.querySelector('.story-stage'),stage);assert.equal(root.querySelector('.sprout-actor'),actor);assert.equal(root.querySelector('.spoken-line').textContent,'Лёд пошёл изнутри.');
+});
+test('Act II activity updates preserve root, avoid polling fades, and dissolve on next scene',async()=>{
+ const {ActTwo,root}=setupActs(true),mirror={...actTwoBase,key:'mirror',id:'mirror',kind:'mirror',mode:'guess',round:1,totalRounds:3,votesCast:0,voters:2,text:'Море'};
+ ActTwo.render({act2:mirror},root,true,async()=>{});const first=root.querySelector('.act-screen');
+ ActTwo.render({act2:{...mirror,remaining:5000}},root,true,async()=>{});assert.equal(root.querySelector('.act-screen'),first);assert.equal(root.querySelector('.a2-timer').textContent,'5 с');
+ ActTwo.render({act2:{...mirror,votesCast:1}},root,true,async()=>{});assert.equal(root.querySelector('.act-screen'),first);assert.equal(first.getAnimations().length,0);
+ ActTwo.render({act2:{...mirror,key:'choice',id:'choice',kind:'choice'}},root,true,async()=>{});assert.notEqual(root.querySelector('.act-screen'),first);assert.equal(first['aria-hidden'],'true');assert(first.inert);
+ const fade=first.animations[0];assert(fade.frames.every(f=>Object.keys(f).join(',')==='opacity'));fade.finish();await Promise.resolve();assert.equal(root.querySelectorAll('.act-screen').length,1);
+});
+test('shared inventory survives Act I cleanup, uses current context, removes consumed items',()=>{
+ const {GameUI,ActOne,body}=setupActs(),used=[];
+ const cfg={owner:'act1',host:false,key:'one',items:[{id:'watch',name:'Тик-так',image:'watch.webp',usable:true}],onUse:id=>used.push('one:'+id)};
+ GameUI.inventory(cfg);const pouch=body.querySelector('#team-inventory');
+ GameUI.inventory({...cfg,owner:'act2',key:'two',onUse:id=>used.push('two:'+id)});ActOne.hide();assert.equal(pouch.hidden,false);assert.equal(body.querySelectorAll('#team-inventory').length,1);
+ pouch.querySelector('.inventory-slot').onclick();const detail=pouch.querySelector('.inventory-detail');assert(detail);detail.querySelector('button').onclick();assert.deepEqual(used,['two:watch']);
+ GameUI.inventory({...cfg,owner:'act2',key:'two',items:[]});assert.equal(pouch.hidden,true);assert.equal(pouch.querySelector('.inventory-detail'),null);
+});
+test('Act II shop calls the same product component and sends purchases only from phone',async()=>{
+ const {ActTwo,GameUI,root}=setupActs();let calls=0;const shared=GameUI.shopItem;GameUI.shopItem=i=>{calls++;return shared(i);};
+ const a={...actTwoBase,key:'shop',id:'shop',kind:'shop',items:[{id:'shield',name:'Щит Хранителя',cost:3}]};const sent=[];
+ ActTwo.render({act2:a},root,true,async p=>sent.push(p));assert.equal(calls,1);assert.equal(root.querySelectorAll('.act-item').length,1);assert.equal(root.querySelector('.act-item').querySelector('button'),null);
+ ActTwo.render({act2:a},root,false,async p=>sent.push(p));assert.equal(calls,2);const b=root.querySelector('.act-item').querySelector('button');await b.onclick();assert.equal(sent[0].type,'propose');assert.equal(sent[0].target,'shield');assert.equal(sent[0].key,'shop');
 });

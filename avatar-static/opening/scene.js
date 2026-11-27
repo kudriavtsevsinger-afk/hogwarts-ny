@@ -1,3 +1,54 @@
+/* Presentation primitives shared by the prologue and every act.
+   Keep scene-specific artwork in renderers; never fork these layouts by act. */
+window.GameUI=(()=>{
+ const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n;};
+ const image=(src,alt,cls)=>{const n=el('img',cls);n.src=src;n.alt=alt||'';n.draggable=false;return n;};
+ const button=(label,click,quiet=false)=>{const n=el('button','act-button'+(quiet?' quiet':''),label);n.type='button';n.onclick=click;return n;};
+ let inventorySignature,inventoryConfig,selected=null,ghost;
+ function copy(dialogue=false){return el('div',dialogue?'story-copy':'act-copy');}
+ function activity({host,kind,id,key,background,label,kicker}){
+  const root=el('section','act-screen '+(host?'act-tv':'act-phone'));Object.assign(root.dataset,{kind,scene:id,key});
+  root.style.backgroundImage=host?'url('+background+')':'linear-gradient(#0b1323e8,#0b1323f5),url('+background+')';
+  root.setAttribute('aria-label',label);
+  if(host&&kicker&&!['title','end'].includes(kind))root.append(el('div','act-kicker',kicker));
+  const main=el('div','act-main'),caption=copy();root.append(main,caption);return{root,main,copy:caption};
+ }
+ function shopItem(item){const tile=el('section','act-item');tile.dataset.item=item.id;tile.append(image(item.image,item.name,'item-art'),el('h2','',item.name),el('p','',item.description),el('strong','item-price',item.cost+' мон.'));return tile;}
+ function waiting(title){const n=el('section','panel act-waiting');n.append(el('h1','',title),el('p','','Смотри на общий экран.'));return n;}
+ function inventory(config){
+  inventoryConfig=config;const {owner,host,items,key,disabled,hidden}=config;
+  let pouch=document.querySelector('#team-inventory');
+  if(!pouch){pouch=el('aside','team-inventory');pouch.id='team-inventory';pouch.setAttribute('aria-label','Артефакты команды');document.body.append(pouch);inventorySignature=null;}
+  if(pouch.dataset.owner!==owner||pouch.dataset.key!==key)selected=null;
+  Object.assign(pouch.dataset,{owner,key});pouch.hidden=Boolean(!items.length||hidden);
+  pouch.className='team-inventory '+(host?'display-inventory':'phone-inventory');
+  document.body.classList.toggle('has-inventory',!pouch.hidden);
+  if(!items.some(i=>i.id===selected))selected=null;
+  const sig=JSON.stringify([owner,host,items,key,disabled,selected,hidden]);if(sig===inventorySignature)return;inventorySignature=sig;
+  pouch.replaceChildren(el('span','inventory-label','Артефакты команды'));const row=el('div','inventory-row');pouch.append(row);
+  for(const item of items){const slot=el(host?'div':'button','inventory-slot'+(item.usable?' available':''));slot.append(image(item.image,'','inventory-image'),el('span','inventory-name',item.name),el('small','inventory-status',item.usable?'Можно использовать':'Пригодится позже'));
+   if(!host){slot.type='button';slot.setAttribute('aria-label',item.name+' · '+(item.usable?'можно использовать':'пригодится позже'));slot.onclick=()=>{selected=selected===item.id?null:item.id;inventory(inventoryConfig);};}row.append(slot);
+  }
+  const item=items.find(i=>i.id===selected);if(item&&!host){const detail=el('section','inventory-detail');detail.append(el('h2','',item.name),el('p','',item.help||item.description));if(item.context)detail.append(el('p','',item.context));
+   if(item.usable){const use=button('Использовать',()=>inventoryConfig.onUse(item.id));use.disabled=!!disabled;detail.append(use);}
+   detail.append(button('Закрыть',()=>{selected=null;inventory(inventoryConfig);},true));pouch.append(detail);
+  }
+ }
+ function hideInventory(owner){const pouch=document.querySelector('#team-inventory');if(pouch&&(!owner||pouch.dataset.owner===owner)){pouch.hidden=true;document.body.classList.toggle('has-inventory',false);}}
+ function mount(parent,root){
+  const old=parent.querySelector('.act-screen');
+  if(old&&old.dataset.key===root.dataset.key){old.className=root.className;Object.assign(old.dataset,root.dataset);old.style.backgroundImage=root.style.backgroundImage;old.replaceChildren(...Array.from(root.children));return old;}
+  ghost?.remove();ghost=null;parent.replaceChildren(root);
+  // Cross-dissolve a changed activity over the old image; polling never restarts it.
+  if(old&&old.animate&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){
+   root.style.animation='none';old.classList.add('ui-outgoing');old.setAttribute('aria-hidden','true');old.inert=true;parent.append(old);ghost=old;
+   const fade=old.animate([{opacity:1},{opacity:0}],{duration:650,easing:'ease-in-out'});fade.finished.then(()=>{old.remove();if(ghost===old)ghost=null;},()=>old.remove());
+  }
+  return root;
+ }
+ return{el,image,button,copy,activity,shopItem,waiting,inventory,hideInventory,mount};
+})();
+
 /* Full-screen illustrated scene. All dialogue sits over the lower edge. */
 window.PrologueScene = (() => {
   const art = '/art/scene-01/';
@@ -25,6 +76,7 @@ window.PrologueScene = (() => {
       const frames={mcgonagall:{neutral:0,smile:1,concerned:2},hagrid:{smile:0,embarrassed:1,neutral:2},dumbledore:{smile:0,amused:1,concerned:2}};
       const n=el('div','story-actor full-body-npc');n.dataset.npc=id;n.style.backgroundImage='url('+castle+id+'.webp)';n.style.backgroundPosition=((frames[id][expression]??0)*50)+'% 0';n.setAttribute('role','img');n.setAttribute('aria-label',name||id);return n;
     }
+    if(id==='sprout')return img('/art/act2/sprout.webp',name,'story-actor sprout-actor');
     if(id==='portrait')return img('/art/act1/painting-2.webp',name,'story-actor');
     if(id==='filch')return img(castle+'filch.png','Филч с кошкой','story-actor filch-actor');
     if(id==='peeves')return img(castle+'peeves.webp',name,'story-actor peeves-actor');
@@ -80,7 +132,7 @@ window.PrologueScene = (() => {
   function updateCopy(scene){
     let copy=stage.querySelector('.story-copy');
     if(!scene.text && scene.visual!=='arrival' && !scene.interactive){copy?.remove();return;}
-    if(!copy){copy=el('div','story-copy');stage.append(copy);}
+    if(!copy){copy=window.GameUI.copy(true);stage.append(copy);}
     copy.replaceChildren();
     if(scene.interaction==='wish'){
       copy.className='story-copy wish-instruction';
@@ -126,7 +178,7 @@ window.PrologueScene = (() => {
       stage.dataset.shot=scene.id||scene.visual;
       if(chapterChanged&&scene.chapter!==7)stage.append(el('div','chapter-transition'));
       stage.dataset.chapter=scene.chapter||1;stage.dataset.framing=scene.framing||'medium';if(scene.darkHall)stage.classList.add('dark-hall');
-      stage.setAttribute('aria-label',scene.chapter===7?'Акт I · Часовая башня':'Пролог · Сцена '+(scene.chapter||1));
+      stage.setAttribute('aria-label',scene.chapter===8?'Акт II · Зимняя теплица':scene.chapter===7?'Акт I · Часовая башня':'Пролог · Сцена '+(scene.chapter||1));
       const bg=background(scene).name;
       if(!['blackout','final-title'].includes(scene.visual))stage.append(img(background(scene).url,'','story-background'));
       if(scene.visual==='trolley') stage.append(img(art+'trolley.webp','Тележка с чемоданами','moving-trolley'));

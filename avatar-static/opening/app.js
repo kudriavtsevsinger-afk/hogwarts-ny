@@ -96,11 +96,12 @@ function accept(next) {
   if(state&&(state.phase!==next.phase||state.act?.key!==next.act?.key))error();
   state = next;
   if(state.phase!=='act1')window.ActOne?.hide?.();
+  if(!['act1','act2'].includes(state.phase))window.GameUI?.hideInventory();
   let bank=document.querySelector('#team-bank');
   if(!bank){bank=element('aside','','team-bank');bank.id='team-bank';bank.setAttribute('role','status');bank.setAttribute('aria-live','polite');bank.setAttribute('aria-atomic','true');const icon=element('span','✦','bank-coin');icon.setAttribute('aria-hidden','true');bank.append(icon,element('span','Общий банк','bank-label'),element('strong','','bank-amount'));const hud=element('div','','game-hud');hud.id='game-hud';const roster=element('div','','team-roster');roster.id='team-roster';roster.setAttribute('role','group');roster.setAttribute('aria-label','Участники');hud.append(roster,bank);document.body.append(hud);}
   bank.hidden=!state.bank;
   const hud=document.querySelector('#game-hud'),roster=document.querySelector('#team-roster');
-  hud.hidden=!state.bank||Boolean(host&&(state.act&&['title','end','black'].includes(state.act.kind)||state.scene&&['blackout','final-title'].includes(state.scene.visual)));
+  hud.hidden=!state.bank||Boolean(host&&(state.act&&['title','end','black'].includes(state.act.kind)||state.act2&&(state.act2.id==='title'||state.act2.kind==='end')||state.scene&&['blackout','final-title'].includes(state.scene.visual)));
   const members=host && ['lineup','title','story','act1','act2'].includes(state.phase)?(state.act2?.cast || state.scene?.cast || state.lineup || []):[];
   roster.hidden=!members.length;
   const rosterKey=members.map(p=>p.id+':'+p.name).join('|');
